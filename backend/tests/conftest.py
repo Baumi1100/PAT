@@ -5,7 +5,13 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 from app.database import get_db
 from app.main import app
-from app.models import user  # noqa: F401 — registers User model with Base.metadata
+from app.models import (  # noqa: F401
+    ai_config,
+    application,
+    job,
+    resume,
+    user,  # noqa: F401 — registers User model with Base.metadata
+)
 from app.models.base import Base
 
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
