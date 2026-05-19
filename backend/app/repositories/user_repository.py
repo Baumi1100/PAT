@@ -1,5 +1,6 @@
 # backend/app/repositories/user_repository.py
 from sqlalchemy import select
+
 from app.models.user import User
 from app.repositories.base import BaseRepository
 
@@ -11,8 +12,8 @@ class UserRepository(BaseRepository[User]):
         result = await self._session.execute(select(User).where(User.email == email))
         return result.scalar_one_or_none()
 
-    async def get_by_telegram_id(self, chat_id: str) -> User | None:
+    async def get_by_telegram_id(self, telegram_chat_id: str) -> User | None:
         result = await self._session.execute(
-            select(User).where(User.telegram_chat_id == chat_id)
+            select(User).where(User.telegram_chat_id == telegram_chat_id)
         )
         return result.scalar_one_or_none()
