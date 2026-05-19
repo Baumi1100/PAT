@@ -16,6 +16,8 @@ class Settings(BaseSettings):
 
     database_url: str
     redis_url: str = "redis://localhost:6379/0"
+    db_pool_size: int = 10
+    db_max_overflow: int = 20
 
     qdrant_host: str = "localhost"
     qdrant_port: int = 6333

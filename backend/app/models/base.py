@@ -15,6 +15,8 @@ class AuditMixin:
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
+        # onupdate fires only for ORM-layer writes; raw SQL UPDATE bypasses this.
+        # A DB-level trigger (set_updated_at) is added in the initial migration.
         onupdate=lambda: datetime.now(timezone.utc),
         nullable=False,
     )
