@@ -35,5 +35,5 @@ class ConflictError(AppException):
 
 
 class ValidationError(AppException):
-    status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+    status_code = status.HTTP_422_UNPROCESSABLE_CONTENT
     detail = "Validation error"
