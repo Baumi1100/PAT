@@ -20,7 +20,7 @@ class AuthService:
     async def register(self, data: UserCreate) -> User:
         existing = await self._repo.get_by_email(data.email)
         if existing:
-            raise ConflictError(f"Email {data.email} already registered")
+            raise ConflictError("An account with this email address already exists")
         user = User(
             email=data.email,
             hashed_password=hash_password(data.password),
@@ -30,7 +30,10 @@ class AuthService:
 
     async def login(self, email: str, password: str) -> TokenResponse:
         user = await self._repo.get_by_email(email)
-        if not user or not verify_password(password, user.hashed_password):
+        # Always run bcrypt to prevent timing-based email enumeration
+        candidate_hash = user.hashed_password if user else ""
+        password_valid = verify_password(password, candidate_hash)
+        if not user or not password_valid:
             raise AuthenticationError("Invalid credentials")
         if not user.is_active:
             raise AuthenticationError("Account inactive")
@@ -40,7 +43,10 @@ class AuthService:
         )
 
     async def get_user_from_token(self, token: str) -> User:
-        payload = decode_access_token(token)
+        try:
+            payload = decode_access_token(token)
+        except ValueError as e:
+            raise AuthenticationError("Invalid token") from e
         user = await self._repo.get_by_id(payload["sub"])
         if not user or not user.is_active:
             raise AuthenticationError("User not found or inactive")
