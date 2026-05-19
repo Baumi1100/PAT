@@ -894,6 +894,28 @@ export const applicationsApi = {
   create: (job_id: string, resume_id: string) =>
     client.post<Application>("/applications/", { job_id, resume_id }),
 };
+
+// Export-Endpunkte — liefern Blob-Responses für .tex und .pdf Downloads
+export const exportApi = {
+  resumeTex: (id: string) =>
+    client.get(`/applications/${id}/export/resume.tex`, { responseType: "blob" }),
+  resumePdf: (id: string) =>
+    client.get(`/applications/${id}/export/resume.pdf`, { responseType: "blob" }),
+  coverLetterTex: (id: string) =>
+    client.get(`/applications/${id}/export/cover_letter.tex`, { responseType: "blob" }),
+  coverLetterPdf: (id: string) =>
+    client.get(`/applications/${id}/export/cover_letter.pdf`, { responseType: "blob" }),
+};
+
+/** Browser-Download eines Blob aus einer API-Response triggern. */
+export function downloadBlob(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 ```
 
 - [ ] **Step 4: Commit**
@@ -1253,13 +1275,14 @@ git commit -m "feat: add Next.js pages — login, dashboard, sidebar layout with
 "use client";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { applicationsApi } from "@/lib/api";
+import { applicationsApi, exportApi, downloadBlob } from "@/lib/api";
 import type { Application } from "@/types/api";
 
 export default function ApplicationDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [app, setApp] = useState<Application | null>(null);
   const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState<string | null>(null);
 
   useEffect(() => {
     applicationsApi.get(id)
@@ -1267,8 +1290,33 @@ export default function ApplicationDetailPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
+  async function handleDownload(
+    type: "resume" | "cover_letter",
+    format: "tex" | "pdf"
+  ) {
+    const key = `${type}.${format}`;
+    setDownloading(key);
+    try {
+      const resp =
+        type === "resume"
+          ? format === "tex"
+            ? await exportApi.resumeTex(id)
+            : await exportApi.resumePdf(id)
+          : format === "tex"
+          ? await exportApi.coverLetterTex(id)
+          : await exportApi.coverLetterPdf(id);
+      downloadBlob(resp.data as Blob, `${type}_${id.slice(0, 8)}.${format}`);
+    } catch {
+      alert(`Download failed for ${key}`);
+    } finally {
+      setDownloading(null);
+    }
+  }
+
   if (loading) return <div className="text-muted-foreground">Loading...</div>;
   if (!app) return <div className="text-red-500">Application not found.</div>;
+
+  const isComplete = app.status === "complete";
 
   return (
     <div className="max-w-4xl space-y-6">
@@ -1280,6 +1328,41 @@ export default function ApplicationDetailPage() {
       </div>
 
       <ProgressBar label="Match Score" value={app.match_score ?? 0} />
+
+      {/* ── LaTeX / PDF Download-Buttons ── */}
+      {isComplete && (
+        <div className="p-4 rounded-xl border border-border bg-card">
+          <h2 className="font-semibold mb-3">Downloads</h2>
+          <div className="flex flex-wrap gap-2">
+            {(["resume", "cover_letter"] as const).map((docType) =>
+              (["tex", "pdf"] as const).map((fmt) => {
+                const key = `${docType}.${fmt}`;
+                const label =
+                  docType === "resume"
+                    ? fmt === "tex" ? "Lebenslauf .tex" : "Lebenslauf .pdf"
+                    : fmt === "tex" ? "Anschreiben .tex" : "Anschreiben .pdf";
+                return (
+                  <button
+                    key={key}
+                    onClick={() => handleDownload(docType, fmt)}
+                    disabled={downloading === key}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
+                      ${fmt === "pdf"
+                        ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                        : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                      } disabled:opacity-50`}
+                  >
+                    {downloading === key ? "…" : label}
+                  </button>
+                );
+              })
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            .tex = LaTeX-Quelltext (editierbar) · .pdf = direkt druckfertiges Dokument
+          </p>
+        </div>
+      )}
 
       <Section title="Strengths" items={app.strengths} color="text-green-400" />
       <Section title="Weaknesses" items={app.weaknesses} color="text-red-400" />
@@ -1340,8 +1423,8 @@ function ProgressBar({ label, value }: { label: string; value: number }) {
 - [ ] **Step 2: Commit**
 
 ```bash
-git add frontend/src/app/
-git commit -m "feat: add application detail page with match score, skill gaps, cover letter"
+git add frontend/src/app/ frontend/src/lib/api.ts
+git commit -m "feat: add application detail page with match score, skill gaps, cover letter and LaTeX/PDF download buttons"
 ```
 
 ---

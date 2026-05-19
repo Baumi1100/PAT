@@ -6,7 +6,7 @@
 
 **Architecture:** Abstract `AIProvider` protocol defines the contract. A `ProviderRegistry` resolves the correct provider+model per task type using the user's `AIProviderConfig` (or system defaults). Each agent takes structured input, calls the provider, validates the JSON response, and returns a typed Pydantic model.
 
-**Tech Stack:** openai>=1.30, anthropic>=0.28, httpx (Ollama), tenacity for retries, Pydantic v2 structured outputs.
+**Tech Stack:** openai>=1.30, anthropic>=0.28, httpx (Ollama), tenacity for retries, Pydantic v2 structured outputs. Agents 5 (ResumeOptimizer) und 6 (CoverLetter) geben zusätzlich valides LaTeX aus — `latex_source`-Feld im jeweiligen Schema — damit Phase 4 daraus per `xelatex` ein PDF kompilieren kann.
 
 **Prerequisite:** Phases 1 and 2 complete.
 
@@ -40,7 +40,8 @@ backend/app/ai/
     ├── resume_schemas.py      # ParsedResume, ResumeSection, etc.
     ├── job_schemas.py         # ParsedJob, JobRequirements, etc.
     ├── match_schemas.py       # MatchResult, SkillGapReport
-    └── document_schemas.py    # OptimizedResume, CoverLetter, InterviewQuestions
+    ├── document_schemas.py    # OptimizedResume (+ latex_source), CoverLetter (+ latex_source), InterviewQuestions
+    └── latex_templates.py     # Jinja2-Basis-Templates für Resume + CoverLetter
 
 tests/unit/ai/
 ├── test_openai_provider.py
@@ -196,6 +197,7 @@ class OptimizedResume(BaseModel):
     keywords_injected: list[str] = Field(default_factory=list)
     ats_score_estimate: float | None = None
     formatting_notes: list[str] = Field(default_factory=list)
+    latex_source: str = ""  # vollständiges .tex-Dokument, von Phase 4 direkt nach PDF kompilierbar
 
 
 class CoverLetter(BaseModel):
@@ -206,6 +208,7 @@ class CoverLetter(BaseModel):
     closing_paragraph: str
     sign_off: str
     full_text: str
+    latex_source: str = ""  # vollständiges .tex-Dokument
 
 
 class InterviewQuestions(BaseModel):
@@ -224,11 +227,90 @@ class ATSKeywordAnalysis(BaseModel):
     keyword_density_score: float = Field(ge=0.0, le=100.0, default=0.0)
 ```
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 5: Write latex_templates.py**
+
+```python
+# backend/app/ai/schemas/latex_templates.py
+"""
+Jinja2-Basis-Templates für LaTeX-Ausgabe der Agents.
+Die Agents füllen diese Templates mit ihren strukturierten Daten,
+bevor sie latex_source ins Schema schreiben.
+Phase 4 kompiliert latex_source → PDF via xelatex.
+"""
+RESUME_PREAMBLE = r"""
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman,english]{babel}
+\usepackage{geometry}
+\geometry{top=2cm, bottom=2cm, left=2.5cm, right=2.5cm}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{parskip}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, urlcolor=blue}
+\titleformat{\section}{\large\bfseries}{}{0em}{}[\titlerule]
+\setlist[itemize]{leftmargin=1.5em, itemsep=0pt, topsep=2pt}
+\pagestyle{empty}
+"""
+
+RESUME_TEMPLATE = r"""
+%(preamble)s
+\begin{document}
+
+%%--- HEADER
+\begin{center}
+  {\LARGE \textbf{%(full_name)s}} \\[4pt]
+  %(email)s \quad|\quad %(phone)s \quad|\quad %(location)s
+\end{center}
+
+\section*{Professional Summary}
+%(summary)s
+
+\section*{Technical Skills}
+%(skills_list)s
+
+\section*{Professional Experience}
+%(experience_blocks)s
+
+\section*{Education}
+%(education_blocks)s
+
+\end{document}
+"""
+
+COVER_LETTER_TEMPLATE = r"""
+%(preamble)s
+\begin{document}
+
+\begin{flushright}
+  %(applicant_name)s \\
+  %(date)s
+\end{flushright}
+
+\bigskip
+%(salutation)s,
+
+\bigskip
+%(opening_paragraph)s
+
+%(body_paragraphs)s
+
+%(closing_paragraph)s
+
+\bigskip
+%(sign_off)s \\[8pt]
+%(applicant_name)s
+
+\end{document}
+"""
+```
+
+- [ ] **Step 6: Commit**
 
 ```bash
 git add backend/app/ai/schemas/
-git commit -m "feat: add typed Pydantic schemas for all AI agent outputs"
+git commit -m "feat: add typed Pydantic schemas for all AI agent outputs incl. latex_source fields"
 ```
 
 ---
@@ -1111,7 +1193,16 @@ class ResumeOptimizerAgent(BaseAgent):
         "3. The summary must directly address the job requirements.\n"
         "4. Skills section must lead with the job's must-have technologies.\n"
         "5. Keep language active, recruiter-friendly, professional.\n"
-        "6. Never fabricate experience or skills the candidate doesn't have."
+        "6. Never fabricate experience or skills the candidate doesn't have.\n"
+        "7. Additionally, populate the `latex_source` field with a COMPLETE, VALID LaTeX document "
+        "using the documentclass `article`, package `geometry` (a4paper, 2cm margins), "
+        "`enumitem`, `titlesec`, and `parskip`. "
+        "The LaTeX must compile cleanly with xelatex. "
+        "Escape all special LaTeX characters in user data: "
+        "& → \\&, % → \\%, $ → \\$, # → \\#, _ → \\_, { → \\{, } → \\}, ~ → \\textasciitilde{}, "
+        "^ → \\textasciicircum{}. "
+        "Use \\section*, \\subsection*, itemize environments. "
+        "Do NOT use any packages not listed above."
     )
 
     async def optimize(
@@ -1178,7 +1269,13 @@ class CoverLetterAgent(BaseAgent):
         "5. If leadership is required, emphasizes leadership experience.\n"
         "6. Closes with a confident call to action.\n"
         "Tone: professional, confident, specific. Avoid clichés like 'passionate' or 'hardworking'. "
-        "Length: 3-4 paragraphs. Also provide full_text as a single formatted string."
+        "Length: 3-4 paragraphs. Also provide full_text as a single formatted string.\n"
+        "Additionally, populate the `latex_source` field with a COMPLETE, VALID LaTeX document "
+        "for the cover letter using documentclass `article`, packages `geometry` (a4paper, 2cm margins), "
+        "`parskip`, and `babel` (ngerman or english depending on job language). "
+        "Structure: flushright header with name+date, salutation, paragraphs, sign-off. "
+        "Escape all special LaTeX characters in user data (same rules as for the resume). "
+        "The LaTeX must compile cleanly with xelatex."
     )
 
     async def generate(
