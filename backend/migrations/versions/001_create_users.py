@@ -21,8 +21,8 @@ def upgrade() -> None:
         sa.Column("email", sa.String(255), nullable=False, unique=True),
         sa.Column("hashed_password", sa.String(255), nullable=False),
         sa.Column("full_name", sa.String(255), nullable=False),
-        sa.Column("is_active", sa.Boolean(), nullable=False, server_default="true"),
-        sa.Column("is_superuser", sa.Boolean(), nullable=False, server_default="false"),
+        sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text("true")),
+        sa.Column("is_superuser", sa.Boolean(), nullable=False, server_default=sa.text("false")),
         sa.Column("telegram_chat_id", sa.String(64), nullable=True, unique=True),
         sa.Column(
             "created_at",
@@ -50,7 +50,7 @@ def upgrade() -> None:
         $$ LANGUAGE plpgsql;
     """)
     op.execute("""
-        CREATE TRIGGER users_set_updated_at
+        CREATE OR REPLACE TRIGGER users_set_updated_at
         BEFORE UPDATE ON users
         FOR EACH ROW EXECUTE FUNCTION set_updated_at();
     """)
@@ -58,6 +58,7 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     op.execute("DROP TRIGGER IF EXISTS users_set_updated_at ON users;")
-    op.execute("DROP FUNCTION IF EXISTS set_updated_at;")
+    # set_updated_at() intentionally not dropped — shared by future table triggers.
+    # Remove it when all tables referencing it are also dropped.
     op.drop_index("ix_users_email", table_name="users")
     op.drop_table("users")
