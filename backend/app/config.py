@@ -1,4 +1,5 @@
 # backend/app/config.py
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
 
@@ -33,6 +34,20 @@ class Settings(BaseSettings):
 
     # Export (LaTeX → PDF)
     export_dir: str = "/tmp/pat_exports"
+
+    @field_validator("secret_key")
+    @classmethod
+    def secret_key_min_length(cls, v: str) -> str:
+        if len(v) < 32:
+            raise ValueError("secret_key must be at least 32 characters")
+        return v
+
+    @field_validator("database_url")
+    @classmethod
+    def database_url_must_be_async(cls, v: str) -> str:
+        if not v.startswith("postgresql+asyncpg://"):
+            raise ValueError("database_url must use the postgresql+asyncpg:// scheme")
+        return v
 
 
 @lru_cache
