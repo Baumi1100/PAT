@@ -1,7 +1,8 @@
 # backend/app/config.py
+from functools import lru_cache
+
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from functools import lru_cache
 
 _ALLOWED_ALGORITHMS = frozenset({"HS256", "HS384", "HS512"})
 
@@ -38,6 +39,9 @@ class Settings(BaseSettings):
 
     # Export (LaTeX → PDF)
     export_dir: str = "/tmp/pat_exports"
+
+    # CORS
+    cors_origins: list[str] = ["http://localhost:3000"]
 
     @field_validator("secret_key")
     @classmethod
