@@ -4,7 +4,9 @@ from app.core.security import (
     hash_password,
     verify_password,
     create_access_token,
+    create_refresh_token,
     decode_access_token,
+    decode_refresh_token,
 )
 
 
@@ -23,3 +25,22 @@ def test_create_and_decode_access_token():
 def test_decode_invalid_token_raises():
     with pytest.raises(ValueError, match="Invalid token"):
         decode_access_token("not.a.valid.token")
+
+
+def test_refresh_token_rejected_by_decode_access_token():
+    refresh = create_refresh_token(subject="user-123")
+    with pytest.raises(ValueError, match="Invalid token"):
+        decode_access_token(refresh)
+
+
+def test_access_token_rejected_by_decode_refresh_token():
+    access = create_access_token(subject="user-123")
+    with pytest.raises(ValueError, match="Invalid token"):
+        decode_refresh_token(access)
+
+
+def test_create_refresh_token_roundtrip():
+    token = create_refresh_token(subject="user-456")
+    payload = decode_refresh_token(token)
+    assert payload["sub"] == "user-456"
+    assert payload["type"] == "refresh"

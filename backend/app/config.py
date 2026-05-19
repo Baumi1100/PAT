@@ -3,6 +3,8 @@ from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
 
+_ALLOWED_ALGORITHMS = frozenset({"HS256", "HS384", "HS512"})
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
@@ -49,6 +51,13 @@ class Settings(BaseSettings):
     def database_url_must_be_async(cls, v: str) -> str:
         if not v.startswith("postgresql+asyncpg://"):
             raise ValueError("database_url must use the postgresql+asyncpg:// scheme")
+        return v
+
+    @field_validator("algorithm")
+    @classmethod
+    def algorithm_must_be_hmac(cls, v: str) -> str:
+        if v not in _ALLOWED_ALGORITHMS:
+            raise ValueError(f"algorithm must be one of {_ALLOWED_ALGORITHMS}")
         return v
 
 

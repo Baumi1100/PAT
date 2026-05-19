@@ -40,3 +40,12 @@ def test_get_settings_caching(monkeypatch):
     assert isinstance(s1, Settings)
     assert s1 is s2
     get_settings.cache_clear()
+
+
+def test_algorithm_invalid_raises():
+    with pytest.raises(ValidationError):
+        Settings(
+            database_url="postgresql+asyncpg://u:p@localhost/db",
+            secret_key="x" * 32,
+            algorithm="RS256",
+        )
