@@ -1,19 +1,19 @@
 # backend/tests/conftest.py
-import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from app.main import app
 from app.database import get_db
-from app.models.base import Base
+from app.main import app
 from app.models import user  # noqa: F401 — registers User model with Base.metadata
+from app.models.base import Base
 
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
 
-@pytest_asyncio.fixture(scope="session")
+@pytest_asyncio.fixture
 async def engine():
+    # Per-test in-memory DB ensures full test isolation (no shared state between tests)
     eng = create_async_engine(TEST_DATABASE_URL, echo=False)
     async with eng.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -33,8 +33,9 @@ async def client(session):
     async def override_get_db():
         yield session
 
+    saved_overrides = app.dependency_overrides.copy()
     app.dependency_overrides[get_db] = override_get_db
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as c:
         yield c
-    app.dependency_overrides.clear()
+    app.dependency_overrides = saved_overrides
