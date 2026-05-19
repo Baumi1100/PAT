@@ -22,6 +22,7 @@ class ResumeRead(BaseModel):
     file_name: str | None
     file_type: str | None
     is_primary: bool
+    status: str | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
