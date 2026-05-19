@@ -41,8 +41,14 @@ def upgrade() -> None:
         ),
     )
     op.create_index("ix_resumes_user_id", "resumes", ["user_id"])
+    op.execute("""
+        CREATE OR REPLACE TRIGGER resumes_set_updated_at
+        BEFORE UPDATE ON resumes
+        FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+    """)
 
 
 def downgrade() -> None:
+    op.execute("DROP TRIGGER IF EXISTS resumes_set_updated_at ON resumes;")
     op.drop_index("ix_resumes_user_id", "resumes")
     op.drop_table("resumes")
