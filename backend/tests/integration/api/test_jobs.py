@@ -1,5 +1,4 @@
 # backend/tests/integration/api/test_jobs.py
-import pytest
 
 
 async def _auth_header(client) -> dict:
@@ -15,7 +14,6 @@ async def _auth_header(client) -> dict:
     return {"Authorization": f"Bearer {token}"}
 
 
-@pytest.mark.asyncio
 async def test_create_job(client):
     headers = await _auth_header(client)
     resp = await client.post(
@@ -31,7 +29,6 @@ async def test_create_job(client):
     assert job["source"] == "telegram"
 
 
-@pytest.mark.asyncio
 async def test_list_jobs(client):
     headers = await _auth_header(client)
     await client.post(
@@ -46,7 +43,6 @@ async def test_list_jobs(client):
     assert jobs[0]["title"] == "Backend Engineer"
 
 
-@pytest.mark.asyncio
 async def test_get_job(client):
     headers = await _auth_header(client)
     create_resp = await client.post(
@@ -60,7 +56,6 @@ async def test_get_job(client):
     assert resp.json()["id"] == job_id
 
 
-@pytest.mark.asyncio
 async def test_delete_job(client):
     headers = await _auth_header(client)
     create_resp = await client.post(
@@ -75,14 +70,12 @@ async def test_delete_job(client):
     assert resp.status_code == 404
 
 
-@pytest.mark.asyncio
 async def test_get_job_not_found(client):
     headers = await _auth_header(client)
     resp = await client.get("/api/v1/jobs/nonexistent-id", headers=headers)
     assert resp.status_code == 404
 
 
-@pytest.mark.asyncio
 async def test_create_job_unauthenticated(client):
     resp = await client.post(
         "/api/v1/jobs/",
