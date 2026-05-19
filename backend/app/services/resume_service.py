@@ -21,8 +21,8 @@ class ResumeService:
         return await self._repo.list_by_user(user_id)
 
     async def get_for_user(self, resume_id: str, user_id: str) -> Resume:
-        resume = await self._repo.get_by_id(resume_id)
-        if not resume or resume.deleted_at:
+        resume = await self._repo.get_active_by_id(resume_id)
+        if not resume:
             raise NotFoundError("Resume not found")
         if resume.user_id != user_id:
             raise AuthorizationError("Not your resume")

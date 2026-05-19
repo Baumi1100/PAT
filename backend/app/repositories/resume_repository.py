@@ -16,6 +16,12 @@ class ResumeRepository(BaseRepository[Resume]):
         )
         return list(result.scalars().all())
 
+    async def get_active_by_id(self, resume_id: str) -> Resume | None:
+        result = await self._session.execute(
+            select(Resume).where(Resume.id == resume_id, Resume.deleted_at.is_(None))
+        )
+        return result.scalar_one_or_none()
+
     async def get_primary(self, user_id: str) -> Resume | None:
         result = await self._session.execute(
             select(Resume).where(
