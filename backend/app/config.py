@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     max_upload_size_mb: int = 10
     upload_dir: str = "/tmp/pat_uploads"
 
-    # Export (LaTeX → PDF)
+    # Export (LaTeX → PDF) — reserved for Phase 5 persistent export caching
     export_dir: str = "/tmp/pat_exports"
 
     # CORS
