@@ -84,8 +84,11 @@ async def test_login_user_not_found_raises(service, mock_repo):
         mock_repo.get_by_email.return_value = None
         with pytest.raises(AuthenticationError) as exc_info:
             await service.login("nobody@b.com", "pass")
-        # Verify verify_password was still called (constant-time check)
-        mock_verify.assert_called_once_with("pass", "")
+        # Verify verify_password was still called with a non-empty hash (constant-time check)
+        mock_verify.assert_called_once()
+        call_args = mock_verify.call_args[0]
+        assert call_args[0] == "pass"
+        assert call_args[1]  # dummy hash must be non-empty
         assert "Invalid credentials" in str(exc_info.value)
 
 
