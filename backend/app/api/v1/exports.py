@@ -1,10 +1,9 @@
 # backend/app/api/v1/exports.py
 import json
-import os
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.config import get_settings
+from app.core.exceptions import AuthorizationError, NotFoundError
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.document_processing.latex_renderer import LatexRenderer
@@ -85,13 +84,19 @@ async def export_cover_letter_pdf(
 async def _get_latex(
     application_id: str, user_id: str, doc_type: str, svc: ApplicationService
 ) -> str:
-    app = await svc.get_for_user(application_id, user_id)
+    try:
+        app = await svc.get_for_user(application_id, user_id)
+    except (NotFoundError, AuthorizationError) as exc:
+        raise exc.to_http() from exc
 
     if doc_type == "resume":
         if not app.optimized_resume:
             raise HTTPException(status_code=404, detail="Optimized resume not yet generated")
-        data = json.loads(app.optimized_resume)
-        latex = data.get("latex_source", "")
+        try:
+            data = json.loads(app.optimized_resume)
+            latex = data.get("latex_source", "")
+        except json.JSONDecodeError:
+            latex = ""
     else:  # cover_letter
         if not app.cover_letter:
             raise HTTPException(status_code=404, detail="Cover letter not yet generated")

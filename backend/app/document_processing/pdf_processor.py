@@ -23,10 +23,9 @@ class PDFProcessor:
     def _try_pymupdf(file_path: str) -> tuple[str, str, int]:
         import fitz  # PyMuPDF
 
-        doc = fitz.open(file_path)
-        pages = doc.page_count
-        text = "\n".join(page.get_text() for page in doc)
-        doc.close()
+        with fitz.open(file_path) as doc:
+            pages = doc.page_count
+            text = "\n".join(page.get_text() for page in doc)
         return text, "pymupdf", pages
 
     @staticmethod

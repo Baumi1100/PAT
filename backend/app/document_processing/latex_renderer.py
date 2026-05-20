@@ -28,18 +28,21 @@ class LatexRenderer:
 
             # xelatex twice: first run for content, second for references/TOC
             for _ in range(2):
-                result = subprocess.run(
-                    [
-                        _XELATEX,
-                        "-interaction=nonstopmode",
-                        "-halt-on-error",
-                        "-output-directory", tmpdir,
-                        tex_path,
-                    ],
-                    capture_output=True,
-                    timeout=self._timeout,
-                    cwd=tmpdir,
-                )
+                try:
+                    result = subprocess.run(
+                        [
+                            _XELATEX,
+                            "-interaction=nonstopmode",
+                            "-halt-on-error",
+                            "-output-directory", tmpdir,
+                            tex_path,
+                        ],
+                        capture_output=True,
+                        timeout=self._timeout,
+                        cwd=tmpdir,
+                    )
+                except subprocess.TimeoutExpired:
+                    raise RuntimeError(f"xelatex timed out after {self._timeout}s")
 
             if result.returncode != 0:
                 stderr = result.stderr.decode("utf-8", errors="replace")[:2000]
