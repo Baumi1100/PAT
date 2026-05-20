@@ -233,15 +233,35 @@ For a public server, update `CORS_ORIGINS` in `.env`:
 CORS_ORIGINS=["https://your-domain.com", "http://your-server-ip:3000"]
 ```
 
-### 3. Build and start
+### 3. Start with pre-built images (recommended)
+
+Every push to `main` automatically builds fresh images and publishes them to GitHub Container Registry. On the server you just pull and start — no compiler, no npm, no TeX Live download:
 
 ```bash
-docker compose up --build -d
+docker compose -f docker-compose.prod.yml pull
+docker compose -f docker-compose.prod.yml up -d
 ```
 
 The `-d` flag runs everything in the background. Logs:
 ```bash
-docker compose logs -f
+docker compose -f docker-compose.prod.yml logs -f
+```
+
+**Update to a newer version:**
+```bash
+docker compose -f docker-compose.prod.yml pull
+docker compose -f docker-compose.prod.yml up -d
+```
+
+> **First-time setup:** The images on ghcr.io are public — no `docker login` needed.
+> If you ever see a 403, go to github.com → your profile → Packages → pat-backend / pat-frontend → Package settings → Change visibility → Public.
+
+### Alternative: build locally on the server
+
+If you prefer to build from source (e.g. after local changes):
+
+```bash
+docker compose up --build -d
 ```
 
 ### 4. Migrate data from a local installation
