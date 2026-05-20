@@ -6,6 +6,7 @@ import app.models.application  # noqa: F401
 import app.models.job  # noqa: F401
 import app.models.resume  # noqa: F401
 import app.models.user  # noqa: F401
+from app.models.job import Job
 
 from app.ai.agents.ats_keyword import ATSKeywordAgent
 from app.ai.agents.cover_letter import CoverLetterAgent
@@ -72,6 +73,21 @@ async def _run_pipeline(
     try:
         resume = await ResumeParserAgent().parse(resume_text, **kw)
         job = await JobAnalyzerAgent().analyze(job_text, **kw)
+
+        # Back-fill Job record with AI-extracted metadata
+        async with session_factory() as session:
+            db_app = await session.get(Application, application_id)
+            if db_app:
+                db_job = await session.get(Job, db_app.job_id)
+                if db_job:
+                    if job.title and db_job.title in ("Job from Telegram", "Job from API"):
+                        db_job.title = job.title
+                    if job.company and not db_job.company:
+                        db_job.company = job.company
+                    if job.location and not db_job.location:
+                        db_job.location = job.location
+                    await session.commit()
+
         ats = await ATSKeywordAgent().analyze(resume, job, **kw)
         match = await MatchScorerAgent().score(resume, job, **kw)
         optimized = await ResumeOptimizerAgent().optimize(resume, job, ats, **kw)

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
+import { Upload, FileText, Trash2, Star } from "lucide-react";
 import { resumesApi } from "@/lib/api";
 import type { Resume } from "@/types/api";
 
@@ -38,33 +39,59 @@ export default function ResumesPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Resumes</h1>
-        <label className={`cursor-pointer px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium ${uploading ? "opacity-50 pointer-events-none" : ""}`}>
+        <div>
+          <h1 className="text-2xl font-bold">Resumes</h1>
+          <p className="text-sm text-muted-foreground mt-1">Upload your CV for AI analysis</p>
+        </div>
+        <label className={`inline-flex items-center gap-2 cursor-pointer px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium transition-opacity ${uploading ? "opacity-50 pointer-events-none" : "hover:bg-primary/90"}`}>
+          <Upload className="w-4 h-4" />
           {uploading ? "Uploading…" : "Upload Resume"}
           <input ref={fileRef} type="file" accept=".pdf,.doc,.docx" style={{ display: "none" }} onChange={handleUpload} />
         </label>
       </div>
+
       {loading ? (
-        <p className="text-muted-foreground">Loading...</p>
+        <div className="space-y-2">
+          {[...Array(2)].map((_, i) => (
+            <div key={i} className="h-16 rounded-xl border border-border bg-card animate-pulse" />
+          ))}
+        </div>
       ) : resumes.length === 0 ? (
-        <div className="p-8 rounded-xl border border-border bg-card text-center text-muted-foreground">
-          No resumes yet. Upload a PDF or Word document to get started.
+        <div className="p-12 rounded-xl border border-dashed border-border bg-card text-center">
+          <FileText className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
+          <p className="text-muted-foreground text-sm">No resumes yet.</p>
+          <p className="text-muted-foreground text-xs mt-1">Upload a PDF or Word document to get started.</p>
         </div>
       ) : (
-        <div className="space-y-2">
-          {resumes.map((r) => (
-            <div key={r.id} className="p-4 rounded-lg border border-border bg-card flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <p className="font-medium">{r.title}</p>
-                {r.is_primary && (
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary">Primary</span>
+        <div className="rounded-xl border border-border overflow-hidden">
+          {resumes.map((r, i) => (
+            <div
+              key={r.id}
+              className={`flex items-center gap-4 px-5 py-4 ${i < resumes.length - 1 ? "border-b border-border" : ""} ${i % 2 === 0 ? "" : "bg-muted/10"}`}
+            >
+              <div className="p-2 rounded-lg bg-muted shrink-0">
+                <FileText className="w-4 h-4 text-muted-foreground" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="font-medium truncate">{r.title}</p>
+                  {r.is_primary && (
+                    <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/20 font-medium shrink-0">
+                      <Star className="w-2.5 h-2.5" />
+                      Primary
+                    </span>
+                  )}
+                </div>
+                {r.file_name && r.file_name !== r.title && (
+                  <p className="text-xs text-muted-foreground mt-0.5 truncate">{r.file_name}</p>
                 )}
               </div>
               <button
                 onClick={() => handleDelete(r.id)}
-                className="text-xs text-red-400 hover:text-red-300 px-2 py-1 rounded hover:bg-red-500/10"
+                className="p-2 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer shrink-0"
+                title="Delete resume"
               >
-                Delete
+                <Trash2 className="w-4 h-4" />
               </button>
             </div>
           ))}
