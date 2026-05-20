@@ -155,28 +155,27 @@ export default function JobDetailPage() {
           </div>
 
           <div className="shrink-0 flex items-center gap-2">
-            {application ? (
+            {application && (
               <Link
                 href={`/applications/${application.id}`}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border border-primary/30 text-primary hover:bg-primary/10 transition-colors"
               >
                 <TrendingUp className="w-3.5 h-3.5" />
-                {application.match_score != null ? `${application.match_score}% Match` : "Analyse"}
+                {application.match_score != null ? `${application.match_score}% Match` : "Zur Analyse"}
               </Link>
-            ) : (
-              <button
-                onClick={handleAnalyze}
-                disabled={analyzing}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-60"
-              >
-                {analyzing ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <TrendingUp className="w-3.5 h-3.5" />
-                )}
-                {analyzing ? "Analysiert…" : "Jetzt analysieren"}
-              </button>
             )}
+            <button
+              onClick={handleAnalyze}
+              disabled={analyzing}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-60"
+            >
+              {analyzing ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <TrendingUp className="w-3.5 h-3.5" />
+              )}
+              {analyzing ? "Analysiert…" : application ? "Neu analysieren" : "Jetzt analysieren"}
+            </button>
           </div>
         </div>
       </div>
