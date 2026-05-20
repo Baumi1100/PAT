@@ -6,7 +6,9 @@ import app.models.application  # noqa: F401
 import app.models.job  # noqa: F401
 import app.models.resume  # noqa: F401
 import app.models.user  # noqa: F401
+import app.models.work_certificate  # noqa: F401
 from app.ai.agents.ats_keyword import ATSKeywordAgent
+from app.ai.agents.certificate_parser import CertificateParserAgent
 from app.ai.agents.cover_letter import CoverLetterAgent
 from app.ai.agents.interview_questions import InterviewQuestionsAgent
 from app.ai.agents.job_analyzer import JobAnalyzerAgent
@@ -14,6 +16,7 @@ from app.ai.agents.match_scorer import MatchScorerAgent
 from app.ai.agents.resume_optimizer import ResumeOptimizerAgent
 from app.ai.agents.resume_parser import ResumeParserAgent
 from app.ai.agents.skill_gap import SkillGapAgent
+from app.ai.schemas.resume_schemas import WorkExperience
 from app.document_processing.moderncv_builder import build_cover_letter, build_resume
 from app.models.job import Job
 from app.tasks.celery_app import celery_app
@@ -75,6 +78,67 @@ async def _run_pipeline(
     try:
         resume = await ResumeParserAgent().parse(resume_text, **kw)
         job = await JobAnalyzerAgent().analyze(job_text, **kw)
+
+        # Enrich resume with data from uploaded Arbeitszeugnisse
+        async with session_factory() as session:
+            db_app = await session.get(Application, application_id)
+            if db_app:
+                from sqlalchemy import select
+
+                from app.models.work_certificate import WorkCertificate
+
+                result = await session.execute(
+                    select(WorkCertificate).where(
+                        WorkCertificate.user_id == db_app.user_id,
+                        WorkCertificate.deleted_at.is_(None),
+                    )
+                )
+                certs = list(result.scalars().all())
+                for cert in certs:
+                    if not cert.raw_text:
+                        continue
+                    parsed_cert = await CertificateParserAgent().parse(cert.raw_text, **kw)
+                    # Merge into resume: add or enrich matching work experience entry
+                    matched = next(
+                        (
+                            e
+                            for e in resume.work_experience
+                            if parsed_cert.company
+                            and parsed_cert.company.lower() in e.company.lower()
+                        ),
+                        None,
+                    )
+                    if matched:
+                        matched.achievements += [
+                            a for a in parsed_cert.achievements if a not in matched.achievements
+                        ]
+                        matched.responsibilities += [
+                            r
+                            for r in parsed_cert.responsibilities
+                            if r not in matched.responsibilities
+                        ]
+                        if parsed_cert.technologies:
+                            matched.technologies = list(
+                                set(matched.technologies + parsed_cert.technologies)
+                            )
+                    else:
+                        # Certificate covers a role not yet in the parsed resume — add it
+                        if parsed_cert.company and parsed_cert.title:
+                            resume.work_experience.append(
+                                WorkExperience(
+                                    company=parsed_cert.company,
+                                    title=parsed_cert.title,
+                                    start_date=parsed_cert.start_date or "",
+                                    end_date=parsed_cert.end_date,
+                                    responsibilities=parsed_cert.responsibilities,
+                                    achievements=parsed_cert.achievements,
+                                    technologies=parsed_cert.technologies,
+                                )
+                            )
+                    # Surface soft skills and leadership from certificate
+                    resume.soft_skills = list(set(resume.soft_skills + parsed_cert.soft_skills))
+                    if parsed_cert.leadership_indicators and not resume.has_leadership:
+                        resume.has_leadership = True
 
         # Back-fill Job record with AI-extracted metadata
         async with session_factory() as session:

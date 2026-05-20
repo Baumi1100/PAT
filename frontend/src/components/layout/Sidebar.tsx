@@ -2,16 +2,25 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Briefcase, FileText, ClipboardList, Settings, LogOut } from "lucide-react";
+import {
+  LayoutDashboard,
+  Briefcase,
+  FileText,
+  ClipboardList,
+  Award,
+  Settings,
+  LogOut,
+} from "lucide-react";
 import { tokenStorage } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 
 const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/jobs", label: "Jobs", icon: Briefcase },
-  { href: "/resumes", label: "Resumes", icon: FileText },
-  { href: "/applications", label: "Applications", icon: ClipboardList },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/resumes", label: "Lebensläufe", icon: FileText },
+  { href: "/certificates", label: "Zeugnisse", icon: Award },
+  { href: "/applications", label: "Bewerbungen", icon: ClipboardList },
+  { href: "/settings", label: "Einstellungen", icon: Settings },
 ];
 
 export function Sidebar() {
@@ -61,7 +70,7 @@ export function Sidebar() {
           className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors cursor-pointer"
         >
           <LogOut className="w-4 h-4 shrink-0" />
-          Sign out
+          Abmelden
         </button>
       </div>
     </aside>

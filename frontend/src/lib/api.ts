@@ -7,6 +7,7 @@ import type {
   Resume,
   TokenResponse,
   User,
+  WorkCertificate,
 } from "@/types/api";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -72,6 +73,18 @@ export const applicationsApi = {
   get: (id: string) => client.get<Application>(`/applications/${id}`),
   create: (job_id: string, resume_id: string) =>
     client.post<Application>("/applications/", { job_id, resume_id }),
+};
+
+export const certificatesApi = {
+  list: () => client.get<WorkCertificate[]>("/certificates/"),
+  upload: (file: File) => {
+    const fd = new FormData();
+    fd.append("file", file);
+    return client.post<WorkCertificate>("/uploads/certificate", fd, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+  delete: (id: string) => client.delete(`/certificates/${id}`),
 };
 
 export const exportApi = {

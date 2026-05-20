@@ -63,6 +63,15 @@ export interface Application {
   interview_questions?: string[] | null;
 }
 
+export interface WorkCertificate {
+  id: string;
+  user_id: string;
+  title: string;
+  file_name: string | null;
+  file_type: string | null;
+  created_at: string;
+}
+
 export interface AIProviderConfig {
   id: string;
   task_type: string;
