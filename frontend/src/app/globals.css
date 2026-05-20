@@ -7,7 +7,7 @@
   /* PAT design tokens — dark-mode only, applied at :root */
   :root,
   .dark {
-    --font-sans: 'Figtree';
+    --font-sans: 'DM Sans';
     --font-mono: 'JetBrains Mono';
     --background: 0 0% 3.9%;            /* #0a0a0a */
     --background-elevated: 0 0% 5.5%;   /* #0e0e0e */
@@ -44,6 +44,7 @@
   * { @apply border-border; }
   body {
     @apply bg-background text-foreground antialiased;
+    font-family: 'DM Sans', system-ui, sans-serif;
   }
 
   /* Anchor reset */
