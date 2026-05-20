@@ -60,9 +60,10 @@ class OllamaProvider:
 
     async def pull_model(self, model: str) -> bool:
         try:
-            async with httpx.AsyncClient(timeout=600) as client, client.stream(
-                "POST", f"{self._base_url}/api/pull", json={"name": model}
-            ) as resp:
+            async with (
+                httpx.AsyncClient(timeout=600) as client,
+                client.stream("POST", f"{self._base_url}/api/pull", json={"name": model}) as resp,
+            ):
                 async for line in resp.aiter_lines():
                     if line:
                         data = json.loads(line)

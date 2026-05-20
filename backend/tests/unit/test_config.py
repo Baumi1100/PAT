@@ -1,6 +1,7 @@
 # backend/tests/unit/test_config.py
 import pytest
 from pydantic import ValidationError
+
 from app.config import Settings, get_settings
 
 

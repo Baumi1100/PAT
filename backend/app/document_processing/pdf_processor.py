@@ -1,5 +1,6 @@
 # backend/app/document_processing/pdf_processor.py
 import structlog
+
 from app.document_processing.base import DocumentResult
 
 log = structlog.get_logger()

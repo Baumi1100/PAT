@@ -1,11 +1,13 @@
 # backend/app/integrations/telegram/handlers.py
 import os
 import tempfile
+
 import httpx
 from telegram import Update
 from telegram.ext import ContextTypes
-from app.integrations.telegram.url_extractor import extract_urls, fetch_job_text_from_url
+
 from app.document_processing.dispatcher import DocumentDispatcher
+from app.integrations.telegram.url_extractor import extract_urls, fetch_job_text_from_url
 
 _dispatcher = DocumentDispatcher()
 
@@ -43,17 +45,21 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         await update.message.reply_text(f"🔍 Fetching job from {urls[0]}...")
         try:
             job_text = await fetch_job_text_from_url(urls[0])
-            await _submit_job(chat_id, job_text, source="telegram_url", url=urls[0], context=context)
+            await _submit_job(
+                chat_id, job_text, source="telegram_url", url=urls[0], context=context
+            )
         except Exception as exc:
             msg = str(exc)
             if "403" in msg or "Forbidden" in msg:
                 await update.message.reply_text(
                     "❌ Diese Seite blockiert automatische Zugriffe (z.B. Indeed).\n\n"
-                    "Kopiere den Stellentext direkt aus der Anzeige und schicke ihn mir als Nachricht."
+                    "Kopiere den Stellentext direkt aus der Anzeige "
+                    "und schicke ihn mir als Nachricht."
                 )
             elif "404" in msg or "Not Found" in msg:
                 await update.message.reply_text(
-                    "❌ Stellenanzeige nicht gefunden (404). Möglicherweise wurde sie bereits entfernt."
+                    "❌ Stellenanzeige nicht gefunden (404). "
+                    "Möglicherweise wurde sie bereits entfernt."
                 )
             else:
                 await update.message.reply_text(f"❌ URL konnte nicht geladen werden: {exc}")
@@ -118,6 +124,7 @@ async def _submit_job(
 ) -> None:
     """Posts job to backend API and triggers analysis pipeline."""
     from app.config import get_settings
+
     settings = get_settings()
     backend_url = getattr(settings, "backend_internal_url", "http://backend:8000")
 

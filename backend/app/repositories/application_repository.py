@@ -16,9 +16,7 @@ class ApplicationRepository(BaseRepository[Application]):
         )
         return list(result.scalars().all())
 
-    async def get_by_job_and_resume(
-        self, job_id: str, resume_id: str
-    ) -> Application | None:
+    async def get_by_job_and_resume(self, job_id: str, resume_id: str) -> Application | None:
         result = await self._session.execute(
             select(Application).where(
                 Application.job_id == job_id, Application.resume_id == resume_id

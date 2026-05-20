@@ -6,14 +6,14 @@ from app.ai.providers.openai_provider import OpenAIProvider
 from app.config import get_settings
 
 TASK_DEFAULTS: dict[str, tuple[str, str]] = {
-    "resume_parsing":      ("openai", "gpt-4.1"),
-    "job_analysis":        ("openai", "gpt-4.1"),
-    "ats_keywords":        ("openai", "gpt-4.1"),
-    "match_scoring":       ("openai", "gpt-4.1"),
+    "resume_parsing": ("openai", "gpt-4.1"),
+    "job_analysis": ("openai", "gpt-4.1"),
+    "ats_keywords": ("openai", "gpt-4.1"),
+    "match_scoring": ("openai", "gpt-4.1"),
     "resume_optimization": ("openai", "gpt-4.1"),
-    "cover_letter":        ("openai", "gpt-4.1"),
+    "cover_letter": ("openai", "gpt-4.1"),
     "interview_questions": ("openai", "gpt-4.1"),
-    "skill_gap":           ("openai", "gpt-4.1"),
+    "skill_gap": ("openai", "gpt-4.1"),
 }
 
 
@@ -27,9 +27,7 @@ class ProviderRegistry:
         if settings.openai_api_key:
             self._providers["openai"] = OpenAIProvider(api_key=settings.openai_api_key)
         if settings.anthropic_api_key:
-            self._providers["anthropic"] = AnthropicProvider(
-                api_key=settings.anthropic_api_key
-            )
+            self._providers["anthropic"] = AnthropicProvider(api_key=settings.anthropic_api_key)
         self._providers["ollama"] = OllamaProvider(base_url=settings.ollama_base_url)
         self._initialized = True
 
@@ -38,9 +36,7 @@ class ProviderRegistry:
             self._build_providers()
         provider = self._providers.get(provider_name)
         if not provider:
-            raise ValueError(
-                f"Provider '{provider_name}' not configured. Check API keys in .env."
-            )
+            raise ValueError(f"Provider '{provider_name}' not configured. Check API keys in .env.")
         return provider
 
     def get_for_task(
@@ -55,15 +51,18 @@ class ProviderRegistry:
             raise ValueError("Both user_provider and user_model must be supplied together.")
         if user_provider and user_model:
             return self.get(user_provider), user_model
-        default_provider_name, default_model = TASK_DEFAULTS.get(
-            task_type, ("openai", "gpt-4.1")
-        )
+        default_provider_name, default_model = TASK_DEFAULTS.get(task_type, ("openai", "gpt-4.1"))
         # Fall back to any available provider if the default is not configured.
         if default_provider_name not in self._providers:
             fallback_order = ["openai", "anthropic", "ollama"]
             for name in fallback_order:
                 if name in self._providers:
-                    fallback_model = "gpt-4.1" if name == "openai" else "claude-haiku-4-5-20251001" if name == "anthropic" else "llama3"
+                    if name == "openai":
+                        fallback_model = "gpt-4.1"
+                    elif name == "anthropic":
+                        fallback_model = "claude-haiku-4-5-20251001"
+                    else:
+                        fallback_model = "llama3"
                     return self._providers[name], fallback_model
             raise ValueError("No AI provider configured. Add an API key to .env.")
         return self.get(default_provider_name), default_model

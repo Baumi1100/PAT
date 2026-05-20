@@ -1,8 +1,8 @@
 # backend/app/integrations/telegram/url_extractor.py
 import re
+
 import httpx
 from bs4 import BeautifulSoup
-
 
 _URL_RE = re.compile(r"https?://[^\s]+")
 

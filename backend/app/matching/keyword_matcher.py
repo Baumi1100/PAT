@@ -1,7 +1,8 @@
 # backend/app/matching/keyword_matcher.py
 import re
-from app.ai.schemas.resume_schemas import ParsedResume
+
 from app.ai.schemas.job_schemas import ParsedJob
+from app.ai.schemas.resume_schemas import ParsedResume
 
 
 def _normalize(term: str) -> str:
@@ -10,9 +11,7 @@ def _normalize(term: str) -> str:
 
 def compute_keyword_overlap(resume: ParsedResume, job: ParsedJob) -> float:
     """Returns 0.0–100.0: % of job's must-have keywords found in resume."""
-    resume_terms = {
-        _normalize(t) for t in resume.skills + resume.technologies if t
-    }
+    resume_terms = {_normalize(t) for t in resume.skills + resume.technologies if t}
     must_have = [_normalize(k) for k in job.must_have_skills + job.ats_keywords if k]
     if not must_have:
         return 100.0

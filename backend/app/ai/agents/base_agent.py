@@ -28,9 +28,7 @@ class BaseAgent:
         temperature: float = 0.1,
         max_tokens: int = 4096,
     ) -> OutputT:
-        provider, model = self._registry.get_for_task(
-            self.task_type, user_provider, user_model
-        )
+        provider, model = self._registry.get_for_task(self.task_type, user_provider, user_model)
         schema_hint = output_schema.model_json_schema()
         system = (
             f"{self.system_prompt}\n\n"

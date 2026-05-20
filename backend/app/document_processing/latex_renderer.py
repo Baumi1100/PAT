@@ -3,6 +3,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+
 import structlog
 
 log = structlog.get_logger()
@@ -34,15 +35,16 @@ class LatexRenderer:
                             _XELATEX,
                             "-interaction=nonstopmode",
                             "-halt-on-error",
-                            "-output-directory", tmpdir,
+                            "-output-directory",
+                            tmpdir,
                             tex_path,
                         ],
                         capture_output=True,
                         timeout=self._timeout,
                         cwd=tmpdir,
                     )
-                except subprocess.TimeoutExpired:
-                    raise RuntimeError(f"xelatex timed out after {self._timeout}s")
+                except subprocess.TimeoutExpired as exc:
+                    raise RuntimeError(f"xelatex timed out after {self._timeout}s") from exc
 
             if result.returncode != 0:
                 stderr = result.stderr.decode("utf-8", errors="replace")[:2000]

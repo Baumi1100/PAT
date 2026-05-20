@@ -49,9 +49,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.execute(
-        "DROP TRIGGER IF EXISTS ai_provider_configs_set_updated_at ON ai_provider_configs;"
-    )
+    op.execute("DROP TRIGGER IF EXISTS ai_provider_configs_set_updated_at ON ai_provider_configs;")
     op.drop_constraint("uq_ai_config_user_task", "ai_provider_configs", type_="unique")
     op.drop_index("ix_ai_provider_configs_user_id", "ai_provider_configs")
     op.drop_table("ai_provider_configs")

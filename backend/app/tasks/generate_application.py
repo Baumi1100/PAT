@@ -6,8 +6,6 @@ import app.models.application  # noqa: F401
 import app.models.job  # noqa: F401
 import app.models.resume  # noqa: F401
 import app.models.user  # noqa: F401
-from app.models.job import Job
-
 from app.ai.agents.ats_keyword import ATSKeywordAgent
 from app.ai.agents.cover_letter import CoverLetterAgent
 from app.ai.agents.interview_questions import InterviewQuestionsAgent
@@ -16,6 +14,7 @@ from app.ai.agents.match_scorer import MatchScorerAgent
 from app.ai.agents.resume_optimizer import ResumeOptimizerAgent
 from app.ai.agents.resume_parser import ResumeParserAgent
 from app.ai.agents.skill_gap import SkillGapAgent
+from app.models.job import Job
 from app.tasks.celery_app import celery_app
 
 
@@ -44,7 +43,9 @@ def generate_application_task(
 def _make_fresh_session():
     """Create a brand-new engine + session bound to the current event loop."""
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
     from app.config import get_settings
+
     s = get_settings()
     engine = create_async_engine(s.database_url, pool_pre_ping=False)
     factory = async_sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)

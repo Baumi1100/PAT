@@ -1,7 +1,7 @@
 # backend/app/matching/embedding_service.py
+from openai import AsyncOpenAI
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.models import Distance, PointStruct, VectorParams
-from openai import AsyncOpenAI
 
 COLLECTION_RESUMES = "resumes"
 COLLECTION_JOBS = "jobs"
@@ -11,6 +11,7 @@ VECTOR_SIZE = 1536
 
 async def get_qdrant() -> AsyncQdrantClient:
     from app.config import get_settings
+
     s = get_settings()
     return AsyncQdrantClient(host=s.qdrant_host, port=s.qdrant_port)
 
@@ -28,6 +29,7 @@ async def ensure_collections(client: AsyncQdrantClient) -> None:
 
 async def embed_text(text: str) -> list[float]:
     from app.config import get_settings
+
     s = get_settings()
     oai = AsyncOpenAI(api_key=s.openai_api_key)
     response = await oai.embeddings.create(input=text[:8000], model=EMBEDDING_MODEL)
@@ -65,7 +67,7 @@ async def compute_semantic_similarity(resume_id: str, job_id: str) -> float:
     job_vec = job_results[0].vector
     if not resume_vec or not job_vec:
         return 0.0
-    dot = sum(a * b for a, b in zip(resume_vec, job_vec))
+    dot = sum(a * b for a, b in zip(resume_vec, job_vec, strict=False))
     mag_r = sum(x * x for x in resume_vec) ** 0.5
     mag_j = sum(x * x for x in job_vec) ** 0.5
     return dot / (mag_r * mag_j) if mag_r and mag_j else 0.0

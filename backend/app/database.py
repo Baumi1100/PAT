@@ -1,6 +1,13 @@
 # backend/app/database.py
 from collections.abc import AsyncGenerator
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
+
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
+
 from app.config import get_settings
 
 
@@ -25,7 +32,8 @@ def _make_session_factory(engine: AsyncEngine) -> async_sessionmaker[AsyncSessio
     )
 
 
-# Module-level singletons — initialized lazily on first access via get_engine() / get_session_factory()
+# Module-level singletons — initialized lazily on first access
+# via get_engine() / get_session_factory()
 _engine: AsyncEngine | None = None
 _session_factory: async_sessionmaker[AsyncSession] | None = None
 

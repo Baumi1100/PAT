@@ -1,5 +1,6 @@
 # backend/app/document_processing/ocr_processor.py
 import structlog
+
 from app.document_processing.base import DocumentResult
 
 log = structlog.get_logger()
@@ -32,6 +33,7 @@ class OCRProcessor:
     def _get_confidence(self, image) -> float:
         try:
             import pytesseract
+
             data = pytesseract.image_to_data(image, output_type=pytesseract.Output.DICT)
             confs = [int(c) for c in data["conf"] if str(c) != "-1"]
             return sum(confs) / len(confs) if confs else 0.0

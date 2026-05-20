@@ -47,15 +47,16 @@ async def test_register_raises_conflict_on_duplicate(service, mock_repo):
 
 @pytest.mark.asyncio
 async def test_login_success(service, mock_repo):
-    with patch("app.services.auth_service.verify_password") as mock_verify, \
-         patch("app.services.auth_service.create_access_token") as mock_access, \
-         patch("app.services.auth_service.create_refresh_token") as mock_refresh:
+    with (
+        patch("app.services.auth_service.verify_password") as mock_verify,
+        patch("app.services.auth_service.create_access_token") as mock_access,
+        patch("app.services.auth_service.create_refresh_token") as mock_refresh,
+    ):
         mock_verify.return_value = True
         mock_access.return_value = "access_token_value"
         mock_refresh.return_value = "refresh_token_value"
         mock_repo.get_by_email.return_value = User(
-            id="user-1", email="a@b.com", hashed_password="hashed",
-            full_name="Test", is_active=True
+            id="user-1", email="a@b.com", hashed_password="hashed", full_name="Test", is_active=True
         )
         result = await service.login("a@b.com", "pass123")
         assert result.access_token == "access_token_value"
@@ -69,8 +70,7 @@ async def test_login_wrong_password_raises(service, mock_repo):
     with patch("app.services.auth_service.verify_password") as mock_verify:
         mock_verify.return_value = False
         mock_repo.get_by_email.return_value = User(
-            id="user-1", email="a@b.com", hashed_password="hashed",
-            full_name="Test", is_active=True
+            id="user-1", email="a@b.com", hashed_password="hashed", full_name="Test", is_active=True
         )
         with pytest.raises(AuthenticationError):
             await service.login("a@b.com", "wrong")
@@ -94,8 +94,11 @@ async def test_login_inactive_user_raises(service, mock_repo):
     with patch("app.services.auth_service.verify_password") as mock_verify:
         mock_verify.return_value = True
         mock_repo.get_by_email.return_value = User(
-            id="user-1", email="a@b.com", hashed_password="hashed",
-            full_name="Test", is_active=False
+            id="user-1",
+            email="a@b.com",
+            hashed_password="hashed",
+            full_name="Test",
+            is_active=False,
         )
         with pytest.raises(AuthenticationError) as exc_info:
             await service.login("a@b.com", "pass123")
@@ -107,8 +110,7 @@ async def test_get_user_from_token(service, mock_repo):
     with patch("app.services.auth_service.decode_access_token") as mock_decode:
         mock_decode.return_value = {"sub": "user-1"}
         mock_repo.get_by_id.return_value = User(
-            id="user-1", email="a@b.com", hashed_password="x",
-            full_name="Test", is_active=True
+            id="user-1", email="a@b.com", hashed_password="x", full_name="Test", is_active=True
         )
         user = await service.get_user_from_token("valid.token.here")
         assert user.id == "user-1"

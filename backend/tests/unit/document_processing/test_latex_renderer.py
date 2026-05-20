@@ -1,6 +1,8 @@
 # backend/tests/unit/document_processing/test_latex_renderer.py
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
+
 from app.document_processing.latex_renderer import LatexRenderer
 
 

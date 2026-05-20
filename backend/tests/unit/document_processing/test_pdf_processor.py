@@ -1,7 +1,7 @@
 # backend/tests/unit/document_processing/test_pdf_processor.py
+
 import pytest
-import os
-import tempfile
+
 from app.document_processing.pdf_processor import PDFProcessor
 
 

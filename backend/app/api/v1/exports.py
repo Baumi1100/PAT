@@ -1,8 +1,10 @@
 # backend/app/api/v1/exports.py
 import json
+
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.exceptions import AuthorizationError, NotFoundError
 from app.database import get_db
 from app.dependencies import get_current_user
@@ -110,7 +112,7 @@ async def _get_latex(
         raise HTTPException(
             status_code=404,
             detail=f"No LaTeX source available for {doc_type}. "
-                   "Ensure the application analysis has completed.",
+            "Ensure the application analysis has completed.",
         )
     return latex
 

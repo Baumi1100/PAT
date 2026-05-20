@@ -7,14 +7,14 @@ from app.core.security import (
     hash_password,
     verify_password,
 )
-
-# Pre-computed dummy hash used when the email is not found, to prevent
-# timing-based email enumeration without passing an invalid hash to passlib.
-_DUMMY_HASH = hash_password("dummy-timing-guard")
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
 from app.schemas.auth import TokenResponse
 from app.schemas.user import UserCreate
+
+# Pre-computed dummy hash used when the email is not found, to prevent
+# timing-based email enumeration without passing an invalid hash to passlib.
+_DUMMY_HASH = hash_password("dummy-timing-guard")
 
 
 class AuthService:

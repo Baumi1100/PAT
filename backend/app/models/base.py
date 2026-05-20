@@ -1,5 +1,6 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
 from sqlalchemy import DateTime, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -17,7 +18,7 @@ class AuditMixin:
         server_default=func.now(),
         # onupdate fires only for ORM-layer writes; raw SQL UPDATE bypasses this.
         # A DB-level trigger (set_updated_at) is added in the initial migration.
-        onupdate=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(UTC),
         nullable=False,
     )
 

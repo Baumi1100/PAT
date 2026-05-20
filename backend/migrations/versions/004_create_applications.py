@@ -5,6 +5,7 @@ Revision ID: 004
 Revises: 003
 Create Date: 2026-05-19
 """
+
 import sqlalchemy as sa
 from alembic import op
 
@@ -20,9 +21,7 @@ def upgrade() -> None:
         sa.Column("id", sa.String(36), primary_key=True),
         sa.Column("user_id", sa.String(36), sa.ForeignKey("users.id"), nullable=False),
         sa.Column("job_id", sa.String(36), sa.ForeignKey("jobs.id"), nullable=False),
-        sa.Column(
-            "resume_id", sa.String(36), sa.ForeignKey("resumes.id"), nullable=False
-        ),
+        sa.Column("resume_id", sa.String(36), sa.ForeignKey("resumes.id"), nullable=False),
         sa.Column("match_score", sa.Float, nullable=True),
         sa.Column("strengths", sa.Text, nullable=True),
         sa.Column("weaknesses", sa.Text, nullable=True),

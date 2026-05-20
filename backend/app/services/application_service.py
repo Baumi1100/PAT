@@ -14,9 +14,7 @@ class ApplicationService:
     async def create(self, user_id: str, data: ApplicationCreate) -> Application:
         existing = await self._repo.get_by_job_and_resume(data.job_id, data.resume_id)
         if existing:
-            raise ConflictError(
-                "Application already exists for this job/resume combination"
-            )
+            raise ConflictError("Application already exists for this job/resume combination")
         application = Application(
             user_id=user_id,
             job_id=data.job_id,
@@ -53,8 +51,6 @@ class ApplicationService:
             suggestions=json.loads(app.suggestions) if app.suggestions else None,
             cover_letter=app.cover_letter,
             interview_questions=(
-                json.loads(app.interview_questions)
-                if app.interview_questions
-                else None
+                json.loads(app.interview_questions) if app.interview_questions else None
             ),
         )

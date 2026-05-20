@@ -15,9 +15,7 @@ class Application(Base, AuditMixin):
     job_id: Mapped[str] = mapped_column(
         String(36), ForeignKey("jobs.id"), nullable=False, index=True
     )
-    resume_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("resumes.id"), nullable=False
-    )
+    resume_id: Mapped[str] = mapped_column(String(36), ForeignKey("resumes.id"), nullable=False)
 
     match_score: Mapped[float | None] = mapped_column(Float, nullable=True)
     strengths: Mapped[str | None] = mapped_column(Text, nullable=True)

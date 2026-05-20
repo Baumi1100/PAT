@@ -6,11 +6,11 @@ from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.application import Application
 from app.models.user import User
+from app.repositories.application_repository import ApplicationRepository
 from app.repositories.job_repository import JobRepository
 from app.repositories.resume_repository import ResumeRepository
 from app.schemas.job import JobCreate, JobRead
 from app.services.job_service import JobService
-from app.repositories.application_repository import ApplicationRepository
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 

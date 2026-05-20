@@ -1,8 +1,10 @@
 # backend/app/core/security.py
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
+
 from jose import JWTError, jwt
 from passlib.context import CryptContext
+
 from app.config import get_settings
 
 _pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -21,9 +23,7 @@ def verify_password(plain: str, hashed: str) -> bool:
 def create_access_token(subject: str, expires_delta: timedelta | None = None) -> str:
     """Create a signed JWT access token."""
     s = get_settings()
-    expire = datetime.now(timezone.utc) + (
-        expires_delta or timedelta(minutes=s.access_token_expire_minutes)
-    )
+    expire = datetime.now(UTC) + (expires_delta or timedelta(minutes=s.access_token_expire_minutes))
     return jwt.encode(
         {"sub": subject, "exp": expire, "type": "access"},
         s.secret_key,
@@ -34,7 +34,7 @@ def create_access_token(subject: str, expires_delta: timedelta | None = None) ->
 def create_refresh_token(subject: str) -> str:
     """Create a signed JWT refresh token."""
     s = get_settings()
-    expire = datetime.now(timezone.utc) + timedelta(days=s.refresh_token_expire_days)
+    expire = datetime.now(UTC) + timedelta(days=s.refresh_token_expire_days)
     return jwt.encode(
         {"sub": subject, "exp": expire, "type": "refresh"},
         s.secret_key,
@@ -43,7 +43,10 @@ def create_refresh_token(subject: str) -> str:
 
 
 def decode_access_token(token: str) -> dict[str, Any]:
-    """Decode and validate a JWT access token. Raises ValueError for invalid/expired tokens or wrong type."""
+    """Decode and validate a JWT access token.
+
+    Raises ValueError for invalid/expired tokens or wrong type.
+    """
     s = get_settings()
     try:
         payload = jwt.decode(token, s.secret_key, algorithms=[s.algorithm])
@@ -55,7 +58,10 @@ def decode_access_token(token: str) -> dict[str, Any]:
 
 
 def decode_refresh_token(token: str) -> dict[str, Any]:
-    """Decode and validate a JWT refresh token. Raises ValueError for invalid/expired tokens or wrong type."""
+    """Decode and validate a JWT refresh token.
+
+    Raises ValueError for invalid/expired tokens or wrong type.
+    """
     s = get_settings()
     try:
         payload = jwt.decode(token, s.secret_key, algorithms=[s.algorithm])

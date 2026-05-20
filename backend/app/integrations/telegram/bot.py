@@ -1,12 +1,13 @@
 # backend/app/integrations/telegram/bot.py
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
+
 from app.config import get_settings
 from app.integrations.telegram.handlers import (
-    handle_start,
-    handle_myid,
-    handle_text,
     handle_document,
+    handle_myid,
     handle_photo,
+    handle_start,
+    handle_text,
 )
 
 

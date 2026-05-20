@@ -5,6 +5,7 @@ Revision ID: 003
 Revises: 002
 Create Date: 2026-05-19
 """
+
 import sqlalchemy as sa
 from alembic import op
 
@@ -24,13 +25,9 @@ def upgrade() -> None:
         sa.Column("location", sa.String(255), nullable=True),
         sa.Column("url", sa.String(2000), nullable=True),
         sa.Column("raw_text", sa.Text, nullable=True),
-        sa.Column(
-            "source", sa.String(50), nullable=False, server_default=sa.text("'manual'")
-        ),
+        sa.Column("source", sa.String(50), nullable=False, server_default=sa.text("'manual'")),
         sa.Column("parsed_data", sa.Text, nullable=True),
-        sa.Column(
-            "status", sa.String(50), nullable=False, server_default=sa.text("'new'")
-        ),
+        sa.Column("status", sa.String(50), nullable=False, server_default=sa.text("'new'")),
         sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column(
             "created_at",

@@ -1,7 +1,7 @@
 # backend/app/matching/match_engine.py
-from app.ai.schemas.resume_schemas import ParsedResume
 from app.ai.schemas.job_schemas import ParsedJob
-from app.matching.keyword_matcher import compute_keyword_overlap, compute_experience_score
+from app.ai.schemas.resume_schemas import ParsedResume
+from app.matching.keyword_matcher import compute_experience_score, compute_keyword_overlap
 
 
 async def compute_combined_match_score(
@@ -26,6 +26,7 @@ async def compute_combined_match_score(
     if resume_id and job_id:
         try:
             from app.matching.embedding_service import compute_semantic_similarity
+
             similarity = await compute_semantic_similarity(resume_id, job_id)
             semantic_score = similarity * 100
         except Exception:

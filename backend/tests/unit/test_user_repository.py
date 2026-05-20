@@ -1,9 +1,11 @@
 # backend/tests/unit/test_user_repository.py
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.repositories.user_repository import UserRepository
+
 from app.models.user import User
+from app.repositories.user_repository import UserRepository
 
 
 @pytest.fixture
