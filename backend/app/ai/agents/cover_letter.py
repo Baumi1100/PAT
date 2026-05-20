@@ -20,13 +20,7 @@ class CoverLetterAgent(BaseAgent):
         "Tone: professional, confident, specific. "
         "Avoid clichés like 'passionate' or 'hardworking'. "
         "Length: 3-4 paragraphs. Also provide full_text as a single formatted string.\n"
-        "Additionally, populate the `latex_source` field with a COMPLETE, VALID LaTeX document "
-        "for the cover letter using documentclass `article`, packages `geometry` "
-        "(a4paper, 2cm margins), "
-        "`parskip`, and `babel` (ngerman or english depending on job language). "
-        "Structure: flushright header with name+date, salutation, paragraphs, sign-off. "
-        r"Escape all special LaTeX characters in user data (same rules as for the resume). "
-        "The LaTeX must compile cleanly with xelatex."
+        "Leave the `latex_source` field empty — it is populated separately by the system."
     )
 
     async def generate(

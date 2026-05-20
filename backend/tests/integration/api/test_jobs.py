@@ -25,7 +25,7 @@ async def test_create_job(client):
     job = resp.json()
     assert job["title"] == "Senior Python Dev"
     assert job["company"] == "Acme"
-    assert job["status"] == "new"
+    assert job["status"] == "interessant"
     assert job["source"] == "telegram"
 
 

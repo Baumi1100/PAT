@@ -20,14 +20,7 @@ class ResumeOptimizerAgent(BaseAgent):
         "4. Skills section must lead with the job's must-have technologies.\n"
         "5. Keep language active, recruiter-friendly, professional.\n"
         "6. Never fabricate experience or skills the candidate doesn't have.\n"
-        "7. Additionally, populate the `latex_source` field with a COMPLETE, VALID LaTeX document "
-        "using the documentclass `article`, package `geometry` (a4paper, 2cm margins), "
-        "`enumitem`, `titlesec`, and `parskip`. "
-        "The LaTeX must compile cleanly with xelatex. "
-        "Escape all special LaTeX characters in user data: "
-        r"& → \&, % → \%, $ → \$, # → \#, _ → \_, { → \{, } → \}. "
-        "Use \\section*, \\subsection*, itemize environments. "
-        "Do NOT use any packages not listed above."
+        "Leave the `latex_source` field empty — it is populated separately by the system."
     )
 
     async def optimize(

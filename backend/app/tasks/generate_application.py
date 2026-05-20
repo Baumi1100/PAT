@@ -14,6 +14,7 @@ from app.ai.agents.match_scorer import MatchScorerAgent
 from app.ai.agents.resume_optimizer import ResumeOptimizerAgent
 from app.ai.agents.resume_parser import ResumeParserAgent
 from app.ai.agents.skill_gap import SkillGapAgent
+from app.document_processing.moderncv_builder import build_cover_letter, build_resume
 from app.models.job import Job
 from app.tasks.celery_app import celery_app
 
@@ -117,6 +118,11 @@ async def _run_pipeline(
         match = await MatchScorerAgent().score(resume, job, **kw)
         optimized = await ResumeOptimizerAgent().optimize(resume, job, ats, **kw)
         cover = await CoverLetterAgent().generate(resume, job, applicant_name, **kw)
+
+        # Build moderncv LaTeX — our template is always valid, no AI-generated LaTeX needed
+        optimized.latex_source = build_resume(resume, optimized)
+        cover.latex_source = build_cover_letter(resume, cover, job)
+
         questions = await InterviewQuestionsAgent().generate(resume, job, match, **kw)
         gaps = await SkillGapAgent().analyze(resume, job, ats, **kw)
 

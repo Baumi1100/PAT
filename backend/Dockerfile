@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     texlive-xetex \
     texlive-lang-german \
     texlive-latex-extra \
+    texlive-fonts-recommended \
     fonts-liberation \
     && rm -rf /var/lib/apt/lists/*
 
