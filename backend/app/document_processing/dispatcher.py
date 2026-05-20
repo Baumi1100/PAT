@@ -13,6 +13,7 @@ _SUPPORTED_EXTENSIONS = {
     ".docx": "docx",
     ".doc": "docx",
     ".txt": "txt",
+    ".tex": "txt",
     ".png": "ocr",
     ".jpg": "ocr",
     ".jpeg": "ocr",

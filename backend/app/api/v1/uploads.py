@@ -25,10 +25,26 @@ _ALLOWED_TYPES = {
     "application/pdf",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     "text/plain",
+    "application/x-tex",
+    "application/x-latex",
+    "text/x-tex",
+    "application/octet-stream",  # browsers sometimes send .tex with this type
     "image/png",
     "image/jpeg",
     "image/webp",
 }
+
+_ALLOWED_EXTENSIONS = {".pdf", ".docx", ".doc", ".txt", ".tex", ".png", ".jpg", ".jpeg", ".webp"}
+
+
+def _check_file_type(file: UploadFile) -> None:
+    ext = os.path.splitext(file.filename or "")[1].lower()
+    if file.content_type in _ALLOWED_TYPES or ext in _ALLOWED_EXTENSIONS:
+        return
+    raise HTTPException(
+        status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+        detail=f"File type '{file.content_type}' / extension '{ext}' not supported.",
+    )
 
 
 @router.post("/resume", response_model=ResumeRead, status_code=status.HTTP_201_CREATED)
@@ -39,11 +55,7 @@ async def upload_resume(
 ) -> Resume:
     settings = get_settings()
 
-    if file.content_type not in _ALLOWED_TYPES:
-        raise HTTPException(
-            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            detail=f"File type '{file.content_type}' not supported.",
-        )
+    _check_file_type(file)
 
     content = await file.read()
     size_mb = len(content) / (1024 * 1024)
@@ -91,11 +103,7 @@ async def upload_certificate(
 ) -> WorkCertificate:
     settings = get_settings()
 
-    if file.content_type not in _ALLOWED_TYPES:
-        raise HTTPException(
-            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            detail=f"File type '{file.content_type}' not supported.",
-        )
+    _check_file_type(file)
 
     content = await file.read()
     size_mb = len(content) / (1024 * 1024)

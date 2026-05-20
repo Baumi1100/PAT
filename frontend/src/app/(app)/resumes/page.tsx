@@ -46,7 +46,7 @@ export default function ResumesPage() {
         <label className={`inline-flex items-center gap-2 cursor-pointer px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium transition-opacity ${uploading ? "opacity-50 pointer-events-none" : "hover:bg-primary/90"}`}>
           <Upload className="w-4 h-4" />
           {uploading ? "Uploading…" : "Upload Resume"}
-          <input ref={fileRef} type="file" accept=".pdf,.doc,.docx" style={{ display: "none" }} onChange={handleUpload} />
+          <input ref={fileRef} type="file" accept=".pdf,.doc,.docx,.tex,.txt" style={{ display: "none" }} onChange={handleUpload} />
         </label>
       </div>
 
