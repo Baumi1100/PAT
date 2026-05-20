@@ -19,18 +19,18 @@ TASK_DEFAULTS: dict[str, tuple[str, str]] = {
 
 class ProviderRegistry:
     def __init__(self) -> None:
-        self._settings = get_settings()
         self._providers: dict[str, AIProvider] = {}
         self._initialized = False
 
     def _build_providers(self) -> None:
-        if self._settings.openai_api_key:
-            self._providers["openai"] = OpenAIProvider(api_key=self._settings.openai_api_key)
-        if self._settings.anthropic_api_key:
+        settings = get_settings()
+        if settings.openai_api_key:
+            self._providers["openai"] = OpenAIProvider(api_key=settings.openai_api_key)
+        if settings.anthropic_api_key:
             self._providers["anthropic"] = AnthropicProvider(
-                api_key=self._settings.anthropic_api_key
+                api_key=settings.anthropic_api_key
             )
-        self._providers["ollama"] = OllamaProvider(base_url=self._settings.ollama_base_url)
+        self._providers["ollama"] = OllamaProvider(base_url=settings.ollama_base_url)
         self._initialized = True
 
     def get(self, provider_name: str) -> AIProvider:
@@ -51,6 +51,8 @@ class ProviderRegistry:
     ) -> tuple[AIProvider, str]:
         if not self._initialized:
             self._build_providers()
+        if bool(user_provider) != bool(user_model):
+            raise ValueError("Both user_provider and user_model must be supplied together.")
         if user_provider and user_model:
             return self.get(user_provider), user_model
         default_provider_name, default_model = TASK_DEFAULTS.get(
