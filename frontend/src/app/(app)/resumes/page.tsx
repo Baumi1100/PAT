@@ -1,6 +1,7 @@
+// frontend/src/app/(app)/resumes/page.tsx
 "use client";
 import { useEffect, useState, useRef } from "react";
-import { Upload, FileText, Trash2, Star } from "lucide-react";
+import { Upload, FileText, Trash2, Star, Loader2 } from "lucide-react";
 import { resumesApi } from "@/lib/api";
 import type { Resume } from "@/types/api";
 
@@ -9,12 +10,12 @@ export default function ResumesPage() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [settingPrimaryId, setSettingPrimaryId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   function load() {
     resumesApi.list().then((r) => setResumes(r.data)).catch(() => {}).finally(() => setLoading(false));
   }
-
   useEffect(() => { load(); }, []);
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -36,94 +37,313 @@ export default function ResumesPage() {
     setSettingPrimaryId(id);
     try {
       await resumesApi.update(id, { is_primary: true });
-      // Optimistically update: mark this one primary, unmark others
-      setResumes((prev) =>
-        prev.map((r) => ({ ...r, is_primary: r.id === id }))
-      );
+      setResumes((prev) => prev.map((r) => ({ ...r, is_primary: r.id === id })));
     } finally {
       setSettingPrimaryId(null);
     }
   }
 
   async function handleDelete(id: string) {
-    await resumesApi.delete(id);
-    setResumes((prev) => prev.filter((r) => r.id !== id));
+    setDeletingId(id);
+    try {
+      await resumesApi.delete(id);
+      setResumes((prev) => prev.filter((r) => r.id !== id));
+    } finally {
+      setDeletingId(null);
+    }
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div style={{ maxWidth: 860 }}>
+      {/* Page header */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 28 }}>
         <div>
-          <h1 className="text-2xl font-bold">Lebensläufe</h1>
-          <p className="text-sm text-muted-foreground mt-1">Lade deinen Lebenslauf für die KI-Analyse hoch</p>
+          <h1 style={{ fontSize: 26, fontWeight: 700, color: "#f5f5f7", margin: 0, letterSpacing: "-0.02em" }}>
+            Lebensläufe{" "}
+            {!loading && resumes.length > 0 && (
+              <span style={{ fontSize: 15, fontWeight: 500, color: "#62626b", fontFamily: "var(--font-mono)", letterSpacing: "0" }}>
+                {resumes.length}
+              </span>
+            )}
+          </h1>
+          <p style={{ fontSize: 14, color: "#9a9aa3", marginTop: 4 }}>
+            Lade deinen Lebenslauf hoch — die KI verwendet ihn für Match-Scores und Bewerbungen.
+          </p>
         </div>
-        <label className={`inline-flex items-center gap-2 cursor-pointer px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium transition-opacity ${uploading ? "opacity-50 pointer-events-none" : "hover:bg-primary/90"}`}>
-          <Upload className="w-4 h-4" />
+
+        {/* Upload button */}
+        <label
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 7,
+            padding: "8px 16px",
+            borderRadius: 8,
+            fontSize: 13.5,
+            fontWeight: 600,
+            background: uploading ? "rgba(99,102,241,0.15)" : "rgba(99,102,241,0.90)",
+            color: uploading ? "#818cf8" : "#fff",
+            border: uploading ? "1px solid rgba(99,102,241,0.30)" : "1px solid rgba(99,102,241,0.60)",
+            cursor: uploading ? "default" : "pointer",
+            transition: "background 0.15s",
+            flexShrink: 0,
+          }}
+        >
+          {uploading ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} /> : <Upload style={{ width: 14, height: 14 }} />}
           {uploading ? "Hochladen…" : "Lebenslauf hochladen"}
           <input ref={fileRef} type="file" accept=".pdf,.doc,.docx,.tex,.txt" style={{ display: "none" }} onChange={handleUpload} />
         </label>
       </div>
 
+      {/* Content */}
       {loading ? (
-        <div className="space-y-2">
+        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
           {[...Array(2)].map((_, i) => (
-            <div key={i} className="h-16 rounded-xl border border-border bg-card animate-pulse" />
+            <div key={i} style={{ height: 60, borderRadius: 8, background: "#111111", border: "1px solid #1a1a1a" }} />
           ))}
         </div>
       ) : resumes.length === 0 ? (
-        <div className="p-12 rounded-xl border border-dashed border-border bg-card text-center">
-          <FileText className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
-          <p className="text-muted-foreground text-sm">Noch keine Lebensläufe vorhanden.</p>
-          <p className="text-muted-foreground text-xs mt-1">Lade ein PDF, Word- oder LaTeX-Dokument hoch.</p>
-        </div>
+        <EmptyUploadZone onClick={() => fileRef.current?.click()} />
       ) : (
-        <div className="rounded-xl border border-border overflow-hidden">
+        <div style={{ border: "1px solid #1e1e1e", borderRadius: 10, overflow: "hidden", background: "#0c0c0c" }}>
+          {/* Header */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 100px 90px",
+              padding: "0 18px",
+              height: 38,
+              alignItems: "center",
+              borderBottom: "1px solid #1e1e1e",
+            }}
+          >
+            {["DATEI", "STATUS", ""].map((h) => (
+              <span key={h} style={{ fontSize: 11, fontWeight: 600, color: "#62626b", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                {h}
+              </span>
+            ))}
+          </div>
+
           {resumes.map((r, i) => (
-            <div
+            <ResumeRow
               key={r.id}
-              className={`flex items-center gap-4 px-5 py-4 ${i < resumes.length - 1 ? "border-b border-border" : ""} ${i % 2 === 0 ? "" : "bg-muted/10"}`}
-            >
-              <div className="p-2 rounded-lg bg-muted shrink-0">
-                <FileText className="w-4 h-4 text-muted-foreground" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="font-medium truncate">{r.title}</p>
-                  {r.is_primary && (
-                    <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/20 font-medium shrink-0">
-                      <Star className="w-2.5 h-2.5" />
-                      Primär
-                    </span>
-                  )}
-                </div>
-                {r.file_name && r.file_name !== r.title && (
-                  <p className="text-xs text-muted-foreground mt-0.5 truncate">{r.file_name}</p>
-                )}
-              </div>
-              <div className="flex items-center gap-1 shrink-0">
-                {!r.is_primary && (
-                  <button
-                    onClick={() => handleSetPrimary(r.id)}
-                    disabled={settingPrimaryId === r.id}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 border border-border hover:border-primary/30 transition-colors disabled:opacity-50"
-                    title="Als primären Lebenslauf markieren"
-                  >
-                    <Star className="w-3.5 h-3.5" />
-                    Als primär setzen
-                  </button>
-                )}
-                <button
-                  onClick={() => handleDelete(r.id)}
-                  className="p-2 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
-                  title="Lebenslauf löschen"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+              resume={r}
+              last={i === resumes.length - 1}
+              settingPrimary={settingPrimaryId === r.id}
+              deleting={deletingId === r.id}
+              onSetPrimary={() => handleSetPrimary(r.id)}
+              onDelete={() => handleDelete(r.id)}
+            />
           ))}
         </div>
       )}
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+}
+
+function ResumeRow({
+  resume: r,
+  last,
+  settingPrimary,
+  deleting,
+  onSetPrimary,
+  onDelete,
+}: {
+  resume: Resume;
+  last: boolean;
+  settingPrimary: boolean;
+  deleting: boolean;
+  onSetPrimary: () => void;
+  onDelete: () => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: "grid",
+        gridTemplateColumns: "1fr 100px 90px",
+        padding: "0 18px",
+        height: 58,
+        alignItems: "center",
+        borderBottom: last ? "none" : "1px solid #1a1a1a",
+        background: hovered ? "rgba(99,102,241,0.03)" : "transparent",
+        transition: "background 0.1s",
+      }}
+    >
+      {/* File info */}
+      <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+        <div
+          style={{
+            width: 34,
+            height: 34,
+            borderRadius: 7,
+            background: "#161616",
+            border: "1px solid #222",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+          }}
+        >
+          <FileText style={{ width: 15, height: 15, color: "#62626b" }} />
+        </div>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: 13.5, fontWeight: 500, color: "#f5f5f7", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            {r.title}
+          </div>
+          {r.file_name && r.file_name !== r.title && (
+            <div style={{ fontSize: 11.5, color: "#62626b", marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {r.file_name}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Status */}
+      <div>
+        {r.is_primary ? (
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 5,
+              padding: "3px 8px",
+              borderRadius: 20,
+              fontSize: 11.5,
+              fontWeight: 600,
+              color: "#fbbf24",
+              background: "rgba(251,191,36,0.10)",
+              border: "1px solid rgba(251,191,36,0.25)",
+            }}
+          >
+            <Star style={{ width: 10, height: 10, fill: "currentColor", strokeWidth: 0 }} />
+            Primär
+          </span>
+        ) : (
+          <span style={{ fontSize: 12, color: "#62626b" }}>—</span>
+        )}
+      </div>
+
+      {/* Actions */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 4 }}>
+        {!r.is_primary && (
+          <ActionBtn
+            title="Als primären Lebenslauf setzen"
+            visible={hovered}
+            loading={settingPrimary}
+            onClick={onSetPrimary}
+            style="star"
+          />
+        )}
+        <ActionBtn
+          title="Löschen"
+          visible={hovered}
+          loading={deleting}
+          onClick={onDelete}
+          style="danger"
+        />
+      </div>
+    </div>
+  );
+}
+
+function ActionBtn({
+  title,
+  visible,
+  loading,
+  onClick,
+  style: variant,
+}: {
+  title: string;
+  visible: boolean;
+  loading: boolean;
+  onClick: () => void;
+  style: "star" | "danger";
+}) {
+  const [hovered, setHovered] = useState(false);
+
+  const colors = variant === "danger"
+    ? { text: hovered ? "#fca5a5" : "#9a9aa3", bg: hovered ? "rgba(239,68,68,0.08)" : "transparent", border: hovered ? "rgba(239,68,68,0.25)" : "transparent" }
+    : { text: hovered ? "#fbbf24" : "#9a9aa3", bg: hovered ? "rgba(251,191,36,0.08)" : "transparent", border: hovered ? "rgba(251,191,36,0.25)" : "transparent" };
+
+  return (
+    <button
+      title={title}
+      onClick={onClick}
+      disabled={loading}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        width: 28,
+        height: 28,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        borderRadius: 6,
+        border: `1px solid ${colors.border}`,
+        background: colors.bg,
+        color: colors.text,
+        opacity: visible || loading ? 1 : 0,
+        transition: "opacity 0.1s, background 0.1s, color 0.1s",
+        cursor: loading ? "default" : "pointer",
+      }}
+    >
+      {loading ? (
+        <Loader2 style={{ width: 12, height: 12, animation: "spin 1s linear infinite" }} />
+      ) : variant === "star" ? (
+        <Star style={{ width: 12, height: 12 }} />
+      ) : (
+        <Trash2 style={{ width: 12, height: 12 }} />
+      )}
+    </button>
+  );
+}
+
+function EmptyUploadZone({ onClick }: { onClick: () => void }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <div
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 10,
+        padding: "52px 32px",
+        border: `2px dashed ${hovered ? "rgba(99,102,241,0.40)" : "#222"}`,
+        borderRadius: 10,
+        background: hovered ? "rgba(99,102,241,0.03)" : "#0c0c0c",
+        cursor: "pointer",
+        transition: "border-color 0.15s, background 0.15s",
+        textAlign: "center",
+      }}
+    >
+      <div
+        style={{
+          width: 42,
+          height: 42,
+          borderRadius: 10,
+          background: hovered ? "rgba(99,102,241,0.12)" : "#161616",
+          border: `1px solid ${hovered ? "rgba(99,102,241,0.25)" : "#222"}`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          transition: "background 0.15s, border-color 0.15s",
+        }}
+      >
+        <Upload style={{ width: 18, height: 18, color: hovered ? "#818cf8" : "#62626b", transition: "color 0.15s" }} />
+      </div>
+      <div>
+        <p style={{ fontSize: 14, fontWeight: 600, color: "#f5f5f7", margin: 0 }}>Lebenslauf hochladen</p>
+        <p style={{ fontSize: 13, color: "#9a9aa3", marginTop: 3 }}>PDF, Word oder LaTeX — max. 10 MB</p>
+      </div>
     </div>
   );
 }
