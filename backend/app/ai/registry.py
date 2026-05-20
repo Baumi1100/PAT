@@ -11,8 +11,8 @@ TASK_DEFAULTS: dict[str, tuple[str, str]] = {
     "ats_keywords":        ("openai", "gpt-4.1"),
     "match_scoring":       ("openai", "gpt-4.1"),
     "resume_optimization": ("openai", "gpt-4.1"),
-    "cover_letter":        ("anthropic", "claude-sonnet-4-6"),
-    "interview_questions": ("anthropic", "claude-sonnet-4-6"),
+    "cover_letter":        ("openai", "gpt-4.1"),
+    "interview_questions": ("openai", "gpt-4.1"),
     "skill_gap":           ("openai", "gpt-4.1"),
 }
 
@@ -58,6 +58,14 @@ class ProviderRegistry:
         default_provider_name, default_model = TASK_DEFAULTS.get(
             task_type, ("openai", "gpt-4.1")
         )
+        # Fall back to any available provider if the default is not configured.
+        if default_provider_name not in self._providers:
+            fallback_order = ["openai", "anthropic", "ollama"]
+            for name in fallback_order:
+                if name in self._providers:
+                    fallback_model = "gpt-4.1" if name == "openai" else "claude-haiku-4-5-20251001" if name == "anthropic" else "llama3"
+                    return self._providers[name], fallback_model
+            raise ValueError("No AI provider configured. Add an API key to .env.")
         return self.get(default_provider_name), default_model
 
     async def health_check_all(self) -> dict[str, bool]:

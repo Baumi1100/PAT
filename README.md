@@ -142,12 +142,54 @@ After that:
 
 ---
 
-### 5. First use
+### 5. Create your account
 
+PAT has no pre-created accounts. You register yourself on first use.
+
+**Option A — Web UI:**
 1. Open http://localhost:3000
-2. Register an account (top-right "Register")
-3. Upload your resume (PDF or DOCX)
-4. Paste a job posting → PAT runs all 8 AI agents and returns match score, optimized resume, cover letter, and interview prep
+2. Click **Sign up** / fill in name, email, and password on the login page
+3. You are logged in immediately
+
+**Option B — API (curl):**
+```bash
+curl -X POST http://localhost:8000/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email": "you@example.com", "password": "YourPassword1!", "full_name": "Your Name"}'
+```
+
+Then log in at http://localhost:3000 with those credentials.
+
+---
+
+### 6. Upload your resume and start using PAT
+
+1. Go to **Resumes** → upload your CV as PDF or DOCX
+2. Go to **Jobs** — jobs arrive via the Telegram bot or the API
+3. PAT automatically runs all 8 AI agents when a job is submitted and shows match score, skill gaps, cover letter, and interview prep in the application detail view
+
+---
+
+### 7. Link your Telegram account
+
+After creating an account and starting the bot, you need to link your Telegram identity to your PAT account once — this is how the bot knows which user to submit jobs for.
+
+**Step 1 — Get your Telegram Chat ID:**
+
+Open Telegram and send `/myid` (or `/start`) to your bot.
+The bot replies with your Chat ID, for example:
+
+```
+Your Telegram Chat ID is: 123456789
+```
+
+**Step 2 — Save it in PAT:**
+
+1. Open http://localhost:3000 and log in
+2. Go to **Settings**
+3. Paste the Chat ID into the **Telegram** field and click **Save**
+
+That's it. The bot will now submit jobs directly into your account whenever you send it a job URL, description, PDF, or screenshot.
 
 ---
 

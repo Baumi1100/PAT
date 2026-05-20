@@ -11,14 +11,26 @@ _dispatcher = DocumentDispatcher()
 
 
 async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    chat_id = str(update.effective_chat.id)
     await update.message.reply_text(
         "👋 Welcome to PAT — Personal Application Tracker!\n\n"
-        "Send me:\n"
+        f"Your Telegram Chat ID: `{chat_id}`\n\n"
+        "To link this account, go to Settings in the web app and enter your Chat ID.\n\n"
+        "Once linked, send me:\n"
         "• A job posting URL\n"
         "• A copied job description (text)\n"
         "• A PDF or DOCX of the job posting\n"
-        "• A screenshot of the job posting\n\n"
-        "I'll analyze it and compare it with your resume."
+        "• A screenshot of the job posting",
+        parse_mode="Markdown",
+    )
+
+
+async def handle_myid(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    chat_id = str(update.effective_chat.id)
+    await update.message.reply_text(
+        f"Your Telegram Chat ID is: `{chat_id}`\n\n"
+        "Copy this and paste it in Settings → Telegram in the PAT web app.",
+        parse_mode="Markdown",
     )
 
 
@@ -33,7 +45,18 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
             job_text = await fetch_job_text_from_url(urls[0])
             await _submit_job(chat_id, job_text, source="telegram_url", url=urls[0], context=context)
         except Exception as exc:
-            await update.message.reply_text(f"❌ Could not fetch URL: {exc}")
+            msg = str(exc)
+            if "403" in msg or "Forbidden" in msg:
+                await update.message.reply_text(
+                    "❌ Diese Seite blockiert automatische Zugriffe (z.B. Indeed).\n\n"
+                    "Kopiere den Stellentext direkt aus der Anzeige und schicke ihn mir als Nachricht."
+                )
+            elif "404" in msg or "Not Found" in msg:
+                await update.message.reply_text(
+                    "❌ Stellenanzeige nicht gefunden (404). Möglicherweise wurde sie bereits entfernt."
+                )
+            else:
+                await update.message.reply_text(f"❌ URL konnte nicht geladen werden: {exc}")
         return
 
     if len(text) > 100:
@@ -124,9 +147,30 @@ async def _submit_job(
             return
 
         job_id = job_resp.json()["id"]
-        await context.bot.send_message(
-            chat_id,
-            f"✅ Job saved! Analysis starting...\n"
-            f"Check the dashboard for results: job ID `{job_id}`",
-            parse_mode="Markdown",
+
+        analyze_resp = await client.post(
+            f"{backend_url}/api/v1/jobs/{job_id}/analyze",
+            headers=headers,
         )
+        if analyze_resp.status_code == 202:
+            app_id = analyze_resp.json().get("application_id", "")
+            await context.bot.send_message(
+                chat_id,
+                f"✅ Job saved and analysis started!\n"
+                f"Check the web app for results — this takes about 30–60 seconds.\n"
+                f"Application ID: `{app_id}`",
+                parse_mode="Markdown",
+            )
+        elif analyze_resp.status_code == 400:
+            await context.bot.send_message(
+                chat_id,
+                "✅ Job saved, but no resume found.\n"
+                "Upload your resume in the web app (Resumes page), then the analysis will run.",
+            )
+        else:
+            await context.bot.send_message(
+                chat_id,
+                f"✅ Job saved (ID: `{job_id}`), but analysis could not start. "
+                "Try triggering it from the web app.",
+                parse_mode="Markdown",
+            )

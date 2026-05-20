@@ -7,6 +7,10 @@ from app.core.security import (
     hash_password,
     verify_password,
 )
+
+# Pre-computed dummy hash used when the email is not found, to prevent
+# timing-based email enumeration without passing an invalid hash to passlib.
+_DUMMY_HASH = hash_password("dummy-timing-guard")
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
 from app.schemas.auth import TokenResponse
@@ -31,7 +35,7 @@ class AuthService:
     async def login(self, email: str, password: str) -> TokenResponse:
         user = await self._repo.get_by_email(email)
         # Always run bcrypt to prevent timing-based email enumeration
-        candidate_hash = user.hashed_password if user else ""
+        candidate_hash = user.hashed_password if user else _DUMMY_HASH
         password_valid = verify_password(password, candidate_hash)
         if not user or not password_valid:
             raise AuthenticationError("Invalid credentials")

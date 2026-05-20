@@ -3,6 +3,7 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters
 from app.config import get_settings
 from app.integrations.telegram.handlers import (
     handle_start,
+    handle_myid,
     handle_text,
     handle_document,
     handle_photo,
@@ -16,6 +17,7 @@ def create_bot_application() -> Application:
 
     app = Application.builder().token(settings.telegram_bot_token).build()
     app.add_handler(CommandHandler("start", handle_start))
+    app.add_handler(CommandHandler("myid", handle_myid))
     app.add_handler(MessageHandler(filters.PHOTO, handle_photo))
     app.add_handler(MessageHandler(filters.Document.ALL, handle_document))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))

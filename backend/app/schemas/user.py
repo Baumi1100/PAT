@@ -15,6 +15,11 @@ class UserRead(BaseModel):
     email: str
     full_name: str
     is_active: bool
+    telegram_chat_id: str | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class UserUpdate(BaseModel):
+    telegram_chat_id: str | None = None
