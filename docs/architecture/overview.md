@@ -8,6 +8,15 @@
 │  Telegram Bot  │  Web Dashboard  │  (Future: Indeed/LinkedIn/RSS)   │
 └───────┬────────┴────────┬────────┴──────────────────────────────────┘
         │                 │
+        │        ┌────────▼────────────────────────────────────────┐
+        │        │        Next.js 15 Frontend (TypeScript)          │
+        │        │  App Router — route groups: (app) / (auth)       │
+        │        │  Pages: Dashboard · Jobs · Applications          │
+        │        │         Resumes · Certificates · Settings        │
+        │        │  DM Sans · Tailwind CSS · Lucide icons           │
+        │        │  Fontsource (bundled, no external font CDN)      │
+        │        └────────┬────────────────────────────────────────┘
+        │                 │  REST  /api/v1/*
         ▼                 ▼
 ┌───────────────────────────────────────────────────────────────────┐
 │                     FastAPI Backend (Python 3.12)                  │
@@ -72,7 +81,7 @@ Infrastructure (Docker Compose):
 **Why:** Unstructured LLM text is useless to downstream code. Pydantic validation catches hallucinated/malformed JSON at the agent boundary, enabling clean retry logic.
 
 ### 6. Soft Deletes on User Data
-**Decision:** `deleted_at` timestamp rather than `DELETE` on resumes.
+**Decision:** `deleted_at` timestamp rather than `DELETE` on jobs, resumes, and applications.
 **Why:** Job application data is sensitive and legally relevant. Audit trails matter. Hard delete can be a scheduled job running against `deleted_at IS NOT NULL AND deleted_at < NOW() - INTERVAL '30 days'`.
 
 ## Data Flow: Submit Job via Telegram
@@ -103,21 +112,27 @@ User → Telegram Bot
 
 ```
 users
-  id, email, hashed_password, full_name, is_active, telegram_chat_id
+  id, email, hashed_password, full_name, is_active, is_superuser,
+  telegram_chat_id, profile_text
 
 resumes
   id, user_id → users, title, raw_text, file_path, parsed_data (JSON),
   is_primary, deleted_at
 
+work_certificates
+  id, user_id → users, title, company, file_path, uploaded_at
+
 jobs
-  id, user_id → users, title, company, url, raw_text, source,
-  parsed_data (JSON), status, deleted_at
+  id, user_id → users, title, company, location, url, raw_text,
+  source, source_platform, parsed_data (JSON), status,
+  salary_range, remote_policy, employment_type, seniority_level,
+  priority, notes, contact_person, applied_at, deleted_at
 
 applications
   id, user_id → users, job_id → jobs, resume_id → resumes,
   match_score, strengths/weaknesses/skill_gaps/suggestions (JSON arrays),
   optimized_resume (JSON), cover_letter, interview_questions (JSON),
-  status, celery_task_id
+  status, celery_task_id, error_message, deleted_at
 
 ai_provider_configs
   id, user_id → users, task_type UNIQUE(user_id, task_type),

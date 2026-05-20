@@ -144,14 +144,9 @@ After that:
 
 ### 5. Create your account
 
-PAT has no pre-created accounts. You register yourself on first use.
+PAT has no pre-created accounts. Registration is done via the API (the web UI is a login-only screen by design — you manage your own user).
 
-**Option A — Web UI:**
-1. Open http://localhost:3000
-2. Click **Sign up** / fill in name, email, and password on the login page
-3. You are logged in immediately
-
-**Option B — API (curl):**
+**Register via API (curl):**
 ```bash
 curl -X POST http://localhost:8000/api/v1/auth/register \
   -H "Content-Type: application/json" \
@@ -207,6 +202,88 @@ docker compose up --build
 
 # Stop and delete all data (fresh start)
 docker compose down -v
+```
+
+---
+
+---
+
+## Server Deployment
+
+PAT is fully self-contained via Docker Compose and runs the same way on any Linux server (Ubuntu, Debian, etc.).
+
+### 1. Install Docker on the server
+
+```bash
+curl -fsSL https://get.docker.com | sh
+sudo usermod -aG docker $USER   # log out and back in after this
+```
+
+### 2. Clone and configure
+
+```bash
+git clone https://github.com/Baumi1100/PAT.git
+cd PAT
+cp backend/.env.example .env
+# Edit .env with your SECRET_KEY, AI keys, etc.
+```
+
+For a public server, update `CORS_ORIGINS` in `.env`:
+```dotenv
+CORS_ORIGINS=["https://your-domain.com", "http://your-server-ip:3000"]
+```
+
+### 3. Build and start
+
+```bash
+docker compose up --build -d
+```
+
+The `-d` flag runs everything in the background. Logs:
+```bash
+docker compose logs -f
+```
+
+### 4. Migrate data from a local installation
+
+To carry over your existing database from a Mac/local machine:
+
+**On the local machine — export:**
+```bash
+docker compose exec postgres pg_dump -U pat pat > pat_backup.sql
+scp pat_backup.sql user@your-server:/home/user/
+```
+
+**On the server — import (after `docker compose up`):**
+```bash
+docker compose exec -T postgres psql -U pat pat < pat_backup.sql
+```
+
+### 5. Keep it running (systemd)
+
+```bash
+sudo nano /etc/systemd/system/pat.service
+```
+
+```ini
+[Unit]
+Description=PAT Application Tracker
+After=docker.service
+Requires=docker.service
+
+[Service]
+WorkingDirectory=/home/user/PAT
+ExecStart=/usr/bin/docker compose up
+ExecStop=/usr/bin/docker compose down
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```bash
+sudo systemctl enable pat
+sudo systemctl start pat
 ```
 
 ---
