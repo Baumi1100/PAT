@@ -23,6 +23,8 @@ async def update_me(
 ) -> User:
     if data.telegram_chat_id is not None:
         current_user.telegram_chat_id = data.telegram_chat_id or None
+    if data.profile_text is not None:
+        current_user.profile_text = data.profile_text or None
     session.add(current_user)
     await session.flush()
     await session.refresh(current_user)

@@ -20,6 +20,7 @@ class User(Base, AuditMixin):
         Boolean, default=False, server_default=sa.text("false"), nullable=False
     )
     telegram_chat_id: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True)
+    profile_text: Mapped[str | None] = mapped_column(sa.Text, nullable=True)
     resumes: Mapped[list["Resume"]] = relationship(  # type: ignore[name-defined]  # noqa: F821
         "Resume", back_populates="user", lazy="select"
     )

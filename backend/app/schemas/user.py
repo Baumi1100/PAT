@@ -16,6 +16,7 @@ class UserRead(BaseModel):
     full_name: str
     is_active: bool
     telegram_chat_id: str | None = None
+    profile_text: str | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -23,3 +24,4 @@ class UserRead(BaseModel):
 
 class UserUpdate(BaseModel):
     telegram_chat_id: str | None = None
+    profile_text: str | None = None

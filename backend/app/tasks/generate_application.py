@@ -178,10 +178,30 @@ async def _run_pipeline(
                         db_job.seniority_level = job.seniority_level
                     await session.commit()
 
+        # Fetch profile_text for this user
+        profile_text = ""
+        async with session_factory() as session:
+            db_app = await session.get(Application, application_id)
+            if db_app:
+                from app.models.user import User as UserModel
+
+                user_obj = await session.get(UserModel, db_app.user_id)
+                if user_obj and user_obj.profile_text:
+                    profile_text = user_obj.profile_text
+
         ats = await ATSKeywordAgent().analyze(resume, job, **kw)
         match = await MatchScorerAgent().score(resume, job, **kw)
-        optimized = await ResumeOptimizerAgent().optimize(resume, job, ats, **kw)
-        cover = await CoverLetterAgent().generate(resume, job, applicant_name, **kw)
+        optimized = await ResumeOptimizerAgent().optimize(
+            resume,
+            job,
+            ats,
+            original_resume_text=resume_text,
+            profile_text=profile_text,
+            **kw,
+        )
+        cover = await CoverLetterAgent().generate(
+            resume, job, applicant_name, profile_text=profile_text, **kw
+        )
 
         # Build moderncv LaTeX — our template is always valid, no AI-generated LaTeX needed
         optimized.latex_source = build_resume(resume, optimized)
