@@ -7,13 +7,6 @@ class ResumeSection(BaseModel):
     content: list[str]
 
 
-class OptimizedResumeBullet(BaseModel):
-    original: str | None = None
-    optimized: str
-    keywords_added: list[str] = Field(default_factory=list)
-    format: str = "STAR"
-
-
 class OptimizedResume(BaseModel):
     summary: str
     skills_section: list[str]

@@ -39,6 +39,7 @@ class AnthropicProvider:
             "model": request.model,
             "max_tokens": request.max_tokens,
             "messages": messages,
+            "temperature": request.temperature,
         }
         if system_content:
             kwargs["system"] = system_content

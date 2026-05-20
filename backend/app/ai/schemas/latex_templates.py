@@ -1,4 +1,6 @@
 # backend/app/ai/schemas/latex_templates.py
+# Phase 4 scaffolding: fallback preamble for when the LLM-generated latex_source in
+# OptimizedResume/CoverLetter is missing or incomplete. Not imported in Phase 3.
 RESUME_PREAMBLE = r"""
 \documentclass[11pt,a4paper]{article}
 \usepackage[utf8]{inputenc}

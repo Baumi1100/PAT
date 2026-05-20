@@ -62,7 +62,7 @@ async def _run_pipeline(
         "skill_gaps": gaps.critical_gaps,
         "suggestions": gaps.suggestions,
         "optimized_resume": optimized.model_dump_json(),
-        "cover_letter": cover.full_text,
+        "cover_letter": cover.model_dump_json(),
         "interview_questions": json.dumps(
             questions.technical_questions + questions.behavioral_questions
         ),
