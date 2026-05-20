@@ -14,10 +14,11 @@ class OCRProcessor:
         import pytesseract
         from PIL import Image
 
-        image = Image.open(file_path)
+        img: Image.Image = Image.open(file_path)
         # Improve OCR quality: convert to grayscale
-        if image.mode != "L":
-            image = image.convert("L")
+        if img.mode != "L":
+            img = img.convert("L")
+        image = img
         text = pytesseract.image_to_string(image, lang=self._lang)
         confidence = self._get_confidence(image)
         warnings = []
