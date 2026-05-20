@@ -1,0 +1,18 @@
+# docker-compose.dev.yml
+services:
+  backend:
+    build:
+      context: ./backend
+      target: development
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+
+  celery_worker:
+    build:
+      context: ./backend
+      target: development
+    command: celery -A app.tasks.celery_app worker --loglevel=debug --concurrency=2
+    volumes:
+      - ./backend:/app
