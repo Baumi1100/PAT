@@ -1,16 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import {
-  ExternalLink,
-  MapPin,
-  Building2,
-  Calendar,
-  Euro,
-  Wifi,
-  Star,
-  Plus,
-} from "lucide-react";
+import { ExternalLink, MapPin, Building2, Star, Trash2, Loader2 } from "lucide-react";
 import { jobsApi, applicationsApi } from "@/lib/api";
 import type { Job, Application } from "@/types/api";
 
@@ -23,16 +14,25 @@ const STATUS_STYLES: Record<string, string> = {
   archiviert: "bg-muted/50 text-muted-foreground border-border",
 };
 
-const PRIORITY_STYLES: Record<string, string> = {
+const PRIORITY_COLORS: Record<string, string> = {
   hoch: "text-red-400",
   mittel: "text-yellow-400",
   niedrig: "text-muted-foreground",
+};
+
+const ANALYSIS_STYLES: Record<string, string> = {
+  pending: "bg-yellow-500/15 text-yellow-400 border-yellow-500/20",
+  analyzing: "bg-blue-500/15 text-blue-400 border-blue-500/20",
+  complete: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
+  error: "bg-red-500/15 text-red-400 border-red-500/20",
 };
 
 export default function JobsPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -43,15 +43,24 @@ export default function JobsPage() {
 
   const appByJob = Object.fromEntries(applications.map((a) => [a.job_id, a]));
 
+  async function handleDelete(jobId: string) {
+    setDeletingId(jobId);
+    try {
+      await jobsApi.delete(jobId);
+      setJobs((prev) => prev.filter((j) => j.id !== jobId));
+    } finally {
+      setDeletingId(null);
+      setConfirmId(null);
+    }
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Jobs</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {jobs.length} Stelle{jobs.length !== 1 ? "n" : ""} gespeichert
-          </p>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold">Jobs</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          {jobs.length} Stelle{jobs.length !== 1 ? "n" : ""} gespeichert
+        </p>
       </div>
 
       {loading ? (
@@ -69,32 +78,34 @@ export default function JobsPage() {
         </div>
       ) : (
         <div className="rounded-xl border border-border overflow-x-auto">
-          <table className="w-full text-sm min-w-[900px]">
+          <table className="w-full text-sm min-w-[700px]">
             <thead>
               <tr className="border-b border-border bg-muted/30">
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Position</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Platform</th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden lg:table-cell">Gehalt</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden lg:table-cell">Remote</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden xl:table-cell">Priorität</th>
-                <th className="text-right px-4 py-3 font-medium text-muted-foreground">Match</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Priorität</th>
+                <th className="text-right px-4 py-3 font-medium text-muted-foreground">Analyse</th>
+                <th className="w-10 px-2 py-3" />
               </tr>
             </thead>
             <tbody>
               {jobs.map((job) => {
                 const app = appByJob[job.id];
+                const isDeleting = deletingId === job.id;
+                const isConfirming = confirmId === job.id;
+
                 return (
                   <tr
                     key={job.id}
                     className="border-b border-border last:border-0 hover:bg-accent/30 transition-colors group"
                   >
+                    {/* Position */}
                     <td className="px-4 py-3.5">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
                           <Link
                             href={`/jobs/${job.id}`}
-                            className="font-medium hover:text-primary transition-colors truncate max-w-[260px]"
+                            className="font-medium hover:text-primary transition-colors truncate max-w-[280px]"
                           >
                             {job.title}
                           </Link>
@@ -117,7 +128,7 @@ export default function JobsPage() {
                             </span>
                           )}
                           {job.location && (
-                            <span className="flex items-center gap-1 hidden sm:flex">
+                            <span className="flex items-center gap-1">
                               <MapPin className="w-3 h-3 shrink-0" />
                               {job.location}
                             </span>
@@ -125,58 +136,74 @@ export default function JobsPage() {
                         </div>
                       </div>
                     </td>
+
+                    {/* Job tracking status — always the job's own status */}
                     <td className="px-4 py-3.5">
-                      {job.source_platform ? (
-                        <span className="text-xs text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-md">
-                          {job.source_platform}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-muted-foreground/40">—</span>
-                      )}
+                      <JobStatusBadge status={job.status} />
                     </td>
+
+                    {/* Priority */}
                     <td className="px-4 py-3.5">
-                      <StatusBadge jobStatus={job.status} appStatus={app?.status} />
-                    </td>
-                    <td className="px-4 py-3.5 hidden lg:table-cell">
-                      {job.salary_range ? (
-                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Euro className="w-3 h-3 shrink-0" />
-                          {job.salary_range}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-muted-foreground/40">—</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3.5 hidden lg:table-cell">
-                      {job.remote_policy ? (
-                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Wifi className="w-3 h-3 shrink-0" />
-                          {job.remote_policy}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-muted-foreground/40">—</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3.5 hidden xl:table-cell">
                       {job.priority ? (
-                        <span className={`flex items-center gap-1 text-xs font-medium ${PRIORITY_STYLES[job.priority.toLowerCase()] ?? "text-muted-foreground"}`}>
+                        <span
+                          className={`flex items-center gap-1 text-xs font-medium ${PRIORITY_COLORS[job.priority.toLowerCase()] ?? "text-muted-foreground"}`}
+                        >
                           <Star className="w-3 h-3 shrink-0" />
                           {job.priority}
                         </span>
                       ) : (
-                        <span className="text-xs text-muted-foreground/40">—</span>
+                        <span className="text-xs text-muted-foreground/30">—</span>
                       )}
                     </td>
+
+                    {/* Analysis result */}
                     <td className="px-4 py-3.5 text-right">
-                      {app?.match_score != null ? (
-                        <Link
-                          href={`/applications/${app.id}`}
-                          className={`text-sm font-semibold hover:underline ${scoreColor(app.match_score)}`}
-                        >
-                          {app.match_score}%
-                        </Link>
+                      {app ? (
+                        app.match_score != null ? (
+                          <Link
+                            href={`/applications/${app.id}`}
+                            className={`text-sm font-semibold hover:underline ${scoreColor(app.match_score)}`}
+                          >
+                            {app.match_score}%
+                          </Link>
+                        ) : (
+                          <span
+                            className={`inline-flex items-center text-xs px-2 py-0.5 rounded-full border font-medium ${ANALYSIS_STYLES[app.status] ?? "bg-muted text-muted-foreground border-border"}`}
+                          >
+                            {app.status === "analyzing" ? "Analysiert…" : app.status}
+                          </span>
+                        )
                       ) : (
-                        <span className="text-xs text-muted-foreground/40">—</span>
+                        <span className="text-xs text-muted-foreground/30">—</span>
+                      )}
+                    </td>
+
+                    {/* Delete */}
+                    <td className="px-2 py-3.5">
+                      {isConfirming ? (
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => handleDelete(job.id)}
+                            disabled={isDeleting}
+                            className="text-xs px-2 py-1 rounded bg-red-500/15 text-red-400 hover:bg-red-500/25 border border-red-500/20 transition-colors"
+                          >
+                            {isDeleting ? <Loader2 className="w-3 h-3 animate-spin" /> : "Ja"}
+                          </button>
+                          <button
+                            onClick={() => setConfirmId(null)}
+                            className="text-xs px-2 py-1 rounded bg-muted text-muted-foreground hover:bg-accent transition-colors"
+                          >
+                            Nein
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setConfirmId(job.id)}
+                          className="p-1.5 rounded-lg text-muted-foreground/0 group-hover:text-muted-foreground/40 hover:!text-red-400 hover:bg-red-500/10 transition-colors"
+                          title="Job löschen"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                       )}
                     </td>
                   </tr>
@@ -196,36 +223,13 @@ function scoreColor(score: number) {
   return "text-red-400";
 }
 
-function StatusBadge({ jobStatus, appStatus }: { jobStatus: string; appStatus?: string }) {
-  const APP_STATUS_STYLES: Record<string, string> = {
-    pending: "bg-yellow-500/15 text-yellow-400 border-yellow-500/20",
-    analyzing: "bg-blue-500/15 text-blue-400 border-blue-500/20",
-    complete: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
-    error: "bg-red-500/15 text-red-400 border-red-500/20",
-  };
-  const APP_LABELS: Record<string, string> = {
-    pending: "Ausstehend",
-    analyzing: "Analysiert…",
-    complete: "Analysiert",
-    error: "Fehler",
-  };
-
-  if (appStatus) {
-    return (
-      <span
-        className={`inline-flex items-center text-xs px-2 py-0.5 rounded-full border font-medium ${APP_STATUS_STYLES[appStatus] ?? "bg-muted text-muted-foreground border-border"}`}
-      >
-        {APP_LABELS[appStatus] ?? appStatus}
-      </span>
-    );
-  }
-
-  const key = jobStatus.toLowerCase();
+function JobStatusBadge({ status }: { status: string }) {
+  const key = status.toLowerCase();
   return (
     <span
       className={`inline-flex items-center text-xs px-2 py-0.5 rounded-full border font-medium capitalize ${STATUS_STYLES[key] ?? "bg-muted/50 text-muted-foreground border-border"}`}
     >
-      {jobStatus}
+      {status}
     </span>
   );
 }
