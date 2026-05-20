@@ -37,6 +37,7 @@ Thumbx.db
 node_modules/
 .next/
 out/
+*.tsbuildinfo
 
 # LaTeX
 *.pdf
