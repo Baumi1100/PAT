@@ -28,7 +28,7 @@ class ApplicationService:
 
     async def get_for_user(self, application_id: str, user_id: str) -> Application:
         app = await self._repo.get_by_id(application_id)
-        if not app:
+        if not app or app.deleted_at is not None:
             raise NotFoundError("Application not found")
         if app.user_id != user_id:
             raise AuthorizationError("Not your application")

@@ -1,5 +1,7 @@
 # backend/app/models/application.py
-from sqlalchemy import Float, ForeignKey, String, Text
+from datetime import datetime
+
+from sqlalchemy import DateTime, Float, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import AuditMixin, Base, generate_uuid
@@ -30,6 +32,7 @@ class Application(Base, AuditMixin):
     status: Mapped[str] = mapped_column(String(50), nullable=False, default="pending")
     celery_task_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     job: Mapped["Job"] = relationship("Job", back_populates="applications")  # type: ignore[name-defined]  # noqa: F821
     resume: Mapped["Resume"] = relationship("Resume", back_populates="applications")  # type: ignore[name-defined]  # noqa: F821

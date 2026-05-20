@@ -2,7 +2,10 @@
 import re
 from datetime import UTC, datetime
 
+from sqlalchemy import select
+
 from app.core.exceptions import AuthorizationError, NotFoundError
+from app.models.application import Application
 from app.models.job import Job
 from app.repositories.job_repository import JobRepository
 from app.schemas.job import JobCreate, JobUpdate
@@ -105,5 +108,14 @@ class JobService:
 
     async def delete(self, job_id: str, user_id: str) -> None:
         job = await self.get_for_user(job_id, user_id)
-        job.deleted_at = datetime.now(UTC)
+        now = datetime.now(UTC)
+        job.deleted_at = now
         await self._repo.save(job)
+
+        # Cascade: soft-delete all applications for this job
+        result = await self._repo._session.execute(
+            select(Application).where(Application.job_id == job_id)
+        )
+        for app in result.scalars().all():
+            app.deleted_at = now
+        await self._repo._session.flush()
