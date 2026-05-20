@@ -1,5 +1,6 @@
 # backend/app/services/application_service.py
 import json
+from datetime import UTC, datetime
 
 from app.core.exceptions import AuthorizationError, ConflictError, NotFoundError
 from app.models.application import Application
@@ -33,6 +34,11 @@ class ApplicationService:
         if app.user_id != user_id:
             raise AuthorizationError("Not your application")
         return app
+
+    async def delete(self, application_id: str, user_id: str) -> None:
+        app = await self.get_for_user(application_id, user_id)
+        app.deleted_at = datetime.now(UTC)
+        await self._repo.save(app)
 
     async def get_detail(self, application_id: str, user_id: str) -> ApplicationDetail:
         app = await self.get_for_user(application_id, user_id)

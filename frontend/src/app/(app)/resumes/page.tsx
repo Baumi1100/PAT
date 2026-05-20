@@ -8,6 +8,7 @@ export default function ResumesPage() {
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [settingPrimaryId, setSettingPrimaryId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   function load() {
@@ -24,10 +25,23 @@ export default function ResumesPage() {
       await resumesApi.upload(file);
       load();
     } catch {
-      alert("Upload failed");
+      alert("Upload fehlgeschlagen");
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
+    }
+  }
+
+  async function handleSetPrimary(id: string) {
+    setSettingPrimaryId(id);
+    try {
+      await resumesApi.update(id, { is_primary: true });
+      // Optimistically update: mark this one primary, unmark others
+      setResumes((prev) =>
+        prev.map((r) => ({ ...r, is_primary: r.id === id }))
+      );
+    } finally {
+      setSettingPrimaryId(null);
     }
   }
 
@@ -40,12 +54,12 @@ export default function ResumesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Resumes</h1>
-          <p className="text-sm text-muted-foreground mt-1">Upload your CV for AI analysis</p>
+          <h1 className="text-2xl font-bold">Lebensläufe</h1>
+          <p className="text-sm text-muted-foreground mt-1">Lade deinen Lebenslauf für die KI-Analyse hoch</p>
         </div>
         <label className={`inline-flex items-center gap-2 cursor-pointer px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium transition-opacity ${uploading ? "opacity-50 pointer-events-none" : "hover:bg-primary/90"}`}>
           <Upload className="w-4 h-4" />
-          {uploading ? "Uploading…" : "Upload Resume"}
+          {uploading ? "Hochladen…" : "Lebenslauf hochladen"}
           <input ref={fileRef} type="file" accept=".pdf,.doc,.docx,.tex,.txt" style={{ display: "none" }} onChange={handleUpload} />
         </label>
       </div>
@@ -59,8 +73,8 @@ export default function ResumesPage() {
       ) : resumes.length === 0 ? (
         <div className="p-12 rounded-xl border border-dashed border-border bg-card text-center">
           <FileText className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
-          <p className="text-muted-foreground text-sm">No resumes yet.</p>
-          <p className="text-muted-foreground text-xs mt-1">Upload a PDF or Word document to get started.</p>
+          <p className="text-muted-foreground text-sm">Noch keine Lebensläufe vorhanden.</p>
+          <p className="text-muted-foreground text-xs mt-1">Lade ein PDF, Word- oder LaTeX-Dokument hoch.</p>
         </div>
       ) : (
         <div className="rounded-xl border border-border overflow-hidden">
@@ -78,7 +92,7 @@ export default function ResumesPage() {
                   {r.is_primary && (
                     <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/20 font-medium shrink-0">
                       <Star className="w-2.5 h-2.5" />
-                      Primary
+                      Primär
                     </span>
                   )}
                 </div>
@@ -86,13 +100,26 @@ export default function ResumesPage() {
                   <p className="text-xs text-muted-foreground mt-0.5 truncate">{r.file_name}</p>
                 )}
               </div>
-              <button
-                onClick={() => handleDelete(r.id)}
-                className="p-2 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer shrink-0"
-                title="Delete resume"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-1 shrink-0">
+                {!r.is_primary && (
+                  <button
+                    onClick={() => handleSetPrimary(r.id)}
+                    disabled={settingPrimaryId === r.id}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 border border-border hover:border-primary/30 transition-colors disabled:opacity-50"
+                    title="Als primären Lebenslauf markieren"
+                  >
+                    <Star className="w-3.5 h-3.5" />
+                    Als primär setzen
+                  </button>
+                )}
+                <button
+                  onClick={() => handleDelete(r.id)}
+                  className="p-2 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
+                  title="Lebenslauf löschen"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           ))}
         </div>

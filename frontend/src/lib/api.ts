@@ -65,6 +65,7 @@ export const resumesApi = {
       headers: { "Content-Type": "multipart/form-data" },
     });
   },
+  update: (id: string, data: Partial<Resume>) => client.patch<Resume>(`/resumes/${id}`, data),
   delete: (id: string) => client.delete(`/resumes/${id}`),
 };
 
@@ -73,6 +74,7 @@ export const applicationsApi = {
   get: (id: string) => client.get<Application>(`/applications/${id}`),
   create: (job_id: string, resume_id: string) =>
     client.post<Application>("/applications/", { job_id, resume_id }),
+  delete: (id: string) => client.delete(`/applications/${id}`),
 };
 
 export const certificatesApi = {

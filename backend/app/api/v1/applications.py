@@ -41,3 +41,12 @@ async def get_application(
     svc: ApplicationService = Depends(_svc),  # noqa: B008
 ) -> ApplicationDetail:
     return await svc.get_detail(application_id, current_user.id)
+
+
+@router.delete("/{application_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_application(
+    application_id: str,
+    current_user: User = Depends(get_current_user),  # noqa: B008
+    svc: ApplicationService = Depends(_svc),  # noqa: B008
+) -> None:
+    await svc.delete(application_id, current_user.id)
