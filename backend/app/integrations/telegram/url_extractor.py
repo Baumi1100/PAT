@@ -35,6 +35,6 @@ async def fetch_job_text_from_url(url: str, timeout: int = 15) -> str:
     ]:
         element = soup.select_one(selector)
         if element and len(element.get_text(strip=True)) > 200:
-            return element.get_text(separator="\n", strip=True)[:10000]
+            return str(element.get_text(separator="\n", strip=True))[:10000]
 
-    return soup.get_text(separator="\n", strip=True)[:10000]
+    return str(soup.get_text(separator="\n", strip=True))[:10000]

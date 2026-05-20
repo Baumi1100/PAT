@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.core.exceptions import AuthenticationError, AuthorizationError, ConflictError
 from app.core.security import create_access_token, decode_refresh_token
 from app.dependencies import get_auth_service
+from app.models.user import User
 from app.schemas.auth import LoginRequest, RefreshRequest, TelegramLoginRequest, TokenResponse
 from app.schemas.user import UserCreate, UserRead
 from app.services.auth_service import AuthService
@@ -15,7 +16,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 async def register(
     data: UserCreate,
     auth_service: AuthService = Depends(get_auth_service),  # noqa: B008
-):
+) -> User:
     try:
         user = await auth_service.register(data)
         return user
@@ -27,7 +28,7 @@ async def register(
 async def login(
     data: LoginRequest,
     auth_service: AuthService = Depends(get_auth_service),  # noqa: B008
-):
+) -> TokenResponse:
     try:
         return await auth_service.login(data.email, data.password)
     except AuthenticationError as exc:
@@ -49,7 +50,7 @@ async def telegram_login(
 @router.post("/refresh", response_model=TokenResponse)
 async def refresh(
     data: RefreshRequest,
-):
+) -> TokenResponse:
     try:
         payload = decode_refresh_token(data.refresh_token)
         access_token = create_access_token(subject=payload["sub"])

@@ -1,5 +1,6 @@
 # backend/app/document_processing/dispatcher.py
 import os
+from typing import Protocol
 
 from app.document_processing.base import DocumentResult
 from app.document_processing.docx_processor import DocxProcessor
@@ -19,9 +20,13 @@ _SUPPORTED_EXTENSIONS = {
 }
 
 
+class _Processor(Protocol):
+    def process(self, file_path: str) -> DocumentResult: ...
+
+
 class DocumentDispatcher:
     def __init__(self) -> None:
-        self._processors = {
+        self._processors: dict[str, _Processor] = {
             "pdf": PDFProcessor(),
             "docx": DocxProcessor(),
             "ocr": OCRProcessor(),

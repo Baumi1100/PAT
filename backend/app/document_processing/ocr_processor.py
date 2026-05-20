@@ -30,7 +30,7 @@ class OCRProcessor:
             warnings=warnings,
         )
 
-    def _get_confidence(self, image) -> float:
+    def _get_confidence(self, image: object) -> float:
         try:
             import pytesseract
 

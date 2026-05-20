@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.application import Application
+from app.models.job import Job
 from app.models.user import User
 from app.repositories.application_repository import ApplicationRepository
 from app.repositories.job_repository import JobRepository
@@ -24,7 +25,7 @@ async def create_job(
     data: JobCreate,
     current_user: User = Depends(get_current_user),  # noqa: B008
     svc: JobService = Depends(_svc),  # noqa: B008
-) -> JobRead:
+) -> Job:
     return await svc.create(current_user.id, data)
 
 
@@ -33,7 +34,7 @@ async def list_jobs(
     status_filter: str | None = Query(None, alias="status"),
     current_user: User = Depends(get_current_user),  # noqa: B008
     svc: JobService = Depends(_svc),  # noqa: B008
-) -> list[JobRead]:
+) -> list[Job]:
     return await svc.list_for_user(current_user.id, status=status_filter)
 
 
@@ -42,7 +43,7 @@ async def get_job(
     job_id: str,
     current_user: User = Depends(get_current_user),  # noqa: B008
     svc: JobService = Depends(_svc),  # noqa: B008
-) -> JobRead:
+) -> Job:
     return await svc.get_for_user(job_id, current_user.id)
 
 
@@ -61,7 +62,7 @@ async def analyze_job(
     current_user: User = Depends(get_current_user),  # noqa: B008
     svc: JobService = Depends(_svc),  # noqa: B008
     session: AsyncSession = Depends(get_db),  # noqa: B008
-) -> dict:
+) -> dict[str, str]:
     from app.tasks.generate_application import generate_application_task
 
     job = await svc.get_for_user(job_id, current_user.id)

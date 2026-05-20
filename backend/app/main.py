@@ -1,5 +1,7 @@
 # backend/app/main.py
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from typing import Any
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,7 +14,7 @@ from app.core.logging import configure_logging
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     s = get_settings()
     configure_logging(debug=s.debug)
     yield
@@ -46,5 +48,5 @@ app.include_router(v1_router)
 
 
 @app.get("/health")
-async def health():
+async def health() -> dict[str, Any]:
     return {"status": "ok", "app": get_settings().app_name}

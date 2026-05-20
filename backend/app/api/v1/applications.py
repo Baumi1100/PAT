@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.dependencies import get_current_user
+from app.models.application import Application
 from app.models.user import User
 from app.repositories.application_repository import ApplicationRepository
 from app.schemas.application import ApplicationCreate, ApplicationDetail, ApplicationRead
@@ -21,7 +22,7 @@ async def create_application(
     data: ApplicationCreate,
     current_user: User = Depends(get_current_user),  # noqa: B008
     svc: ApplicationService = Depends(_svc),  # noqa: B008
-) -> ApplicationRead:
+) -> Application:
     return await svc.create(current_user.id, data)
 
 
@@ -29,7 +30,7 @@ async def create_application(
 async def list_applications(
     current_user: User = Depends(get_current_user),  # noqa: B008
     svc: ApplicationService = Depends(_svc),  # noqa: B008
-) -> list[ApplicationRead]:
+) -> list[Application]:
     return await svc.list_for_user(current_user.id)
 
 

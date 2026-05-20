@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.dependencies import get_current_user
+from app.models.resume import Resume
 from app.models.user import User
 from app.repositories.resume_repository import ResumeRepository
 from app.schemas.resume import ResumeCreate, ResumeRead, ResumeUpdate
@@ -21,7 +22,7 @@ async def create_resume(
     data: ResumeCreate,
     current_user: User = Depends(get_current_user),  # noqa: B008
     svc: ResumeService = Depends(_svc),  # noqa: B008
-) -> ResumeRead:
+) -> Resume:
     return await svc.create(current_user.id, data)
 
 
@@ -29,7 +30,7 @@ async def create_resume(
 async def list_resumes(
     current_user: User = Depends(get_current_user),  # noqa: B008
     svc: ResumeService = Depends(_svc),  # noqa: B008
-) -> list[ResumeRead]:
+) -> list[Resume]:
     return await svc.list_for_user(current_user.id)
 
 
@@ -38,7 +39,7 @@ async def get_resume(
     resume_id: str,
     current_user: User = Depends(get_current_user),  # noqa: B008
     svc: ResumeService = Depends(_svc),  # noqa: B008
-) -> ResumeRead:
+) -> Resume:
     return await svc.get_for_user(resume_id, current_user.id)
 
 
@@ -48,7 +49,7 @@ async def update_resume(
     data: ResumeUpdate,
     current_user: User = Depends(get_current_user),  # noqa: B008
     svc: ResumeService = Depends(_svc),  # noqa: B008
-) -> ResumeRead:
+) -> Resume:
     return await svc.update(resume_id, current_user.id, data)
 
 

@@ -11,7 +11,7 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 
 @router.get("/me", response_model=UserRead)
-async def get_me(current_user: User = Depends(get_current_user)):  # noqa: B008
+async def get_me(current_user: User = Depends(get_current_user)) -> User:  # noqa: B008
     return current_user
 
 
@@ -20,7 +20,7 @@ async def update_me(
     data: UserUpdate,
     current_user: User = Depends(get_current_user),  # noqa: B008
     session: AsyncSession = Depends(get_db),  # noqa: B008
-):
+) -> User:
     if data.telegram_chat_id is not None:
         current_user.telegram_chat_id = data.telegram_chat_id or None
     session.add(current_user)

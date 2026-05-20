@@ -18,7 +18,7 @@ class OllamaProvider:
 
     @retry(stop=stop_after_attempt(2), wait=wait_exponential(multiplier=1, min=1, max=5))
     async def complete(self, request: CompletionRequest) -> CompletionResponse:
-        payload: dict = {
+        payload: dict[str, object] = {
             "model": request.model,
             "messages": [m.model_dump() for m in request.messages],
             "stream": False,

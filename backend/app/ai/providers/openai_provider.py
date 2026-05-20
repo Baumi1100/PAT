@@ -21,7 +21,7 @@ class OpenAIProvider:
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
     async def complete(self, request: CompletionRequest) -> CompletionResponse:
-        kwargs: dict = {
+        kwargs: dict[str, object] = {
             "model": request.model,
             "messages": [m.model_dump() for m in request.messages],
             "temperature": request.temperature,

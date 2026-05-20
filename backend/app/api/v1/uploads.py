@@ -33,7 +33,7 @@ async def upload_resume(
     file: UploadFile = File(...),  # noqa: B008
     current_user: User = Depends(get_current_user),  # noqa: B008
     session: AsyncSession = Depends(get_db),  # noqa: B008
-) -> ResumeRead:
+) -> Resume:
     settings = get_settings()
 
     if file.content_type not in _ALLOWED_TYPES:

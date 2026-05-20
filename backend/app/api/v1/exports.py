@@ -96,7 +96,7 @@ async def _get_latex(
             raise HTTPException(status_code=404, detail="Optimized resume not yet generated")
         try:
             data = json.loads(app.optimized_resume)
-            latex = data.get("latex_source", "")
+            latex = str(data.get("latex_source", ""))
         except json.JSONDecodeError:
             latex = ""
     else:  # cover_letter
@@ -104,7 +104,7 @@ async def _get_latex(
             raise HTTPException(status_code=404, detail="Cover letter not yet generated")
         try:
             data = json.loads(app.cover_letter)
-            latex = data.get("latex_source", "")
+            latex = str(data.get("latex_source", ""))
         except json.JSONDecodeError:
             latex = ""
 

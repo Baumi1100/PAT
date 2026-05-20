@@ -35,7 +35,7 @@ class AnthropicProvider:
         elif request.response_format == "json_object":
             system_content = "Respond with valid JSON only. No markdown, no explanation."
 
-        kwargs: dict = {
+        kwargs: dict[str, object] = {
             "model": request.model,
             "max_tokens": request.max_tokens,
             "messages": messages,
