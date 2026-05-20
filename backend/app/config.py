@@ -40,6 +40,9 @@ class Settings(BaseSettings):
     # Export (LaTeX → PDF) — reserved for Phase 5 persistent export caching
     export_dir: str = "/tmp/pat_exports"
 
+    # Internal service URL (used by Telegram bot to reach the backend)
+    backend_internal_url: str = "http://backend:8000"
+
     # CORS
     cors_origins: list[str] = ["http://localhost:3000"]
 

@@ -1,5 +1,5 @@
 # backend/app/services/auth_service.py
-from app.core.exceptions import AuthenticationError, ConflictError
+from app.core.exceptions import AuthenticationError, AuthorizationError, ConflictError
 from app.core.security import (
     create_access_token,
     create_refresh_token,
@@ -37,6 +37,15 @@ class AuthService:
             raise AuthenticationError("Invalid credentials")
         if not user.is_active:
             raise AuthenticationError("Account inactive")
+        return TokenResponse(
+            access_token=create_access_token(subject=user.id),
+            refresh_token=create_refresh_token(subject=user.id),
+        )
+
+    async def telegram_login(self, telegram_chat_id: str) -> TokenResponse:
+        user = await self._repo.get_by_telegram_id(telegram_chat_id)
+        if not user or not user.is_active:
+            raise AuthorizationError("Telegram account not linked to any PAT account")
         return TokenResponse(
             access_token=create_access_token(subject=user.id),
             refresh_token=create_refresh_token(subject=user.id),

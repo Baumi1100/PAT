@@ -15,3 +15,7 @@ class TokenResponse(BaseModel):
 
 class RefreshRequest(BaseModel):
     refresh_token: str
+
+
+class TelegramLoginRequest(BaseModel):
+    telegram_chat_id: str

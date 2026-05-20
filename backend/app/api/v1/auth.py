@@ -1,10 +1,10 @@
 # backend/app/api/v1/auth.py
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.core.exceptions import AuthenticationError, ConflictError
+from app.core.exceptions import AuthenticationError, AuthorizationError, ConflictError
 from app.core.security import create_access_token, decode_refresh_token
 from app.dependencies import get_auth_service
-from app.schemas.auth import LoginRequest, RefreshRequest, TokenResponse
+from app.schemas.auth import LoginRequest, RefreshRequest, TelegramLoginRequest, TokenResponse
 from app.schemas.user import UserCreate, UserRead
 from app.services.auth_service import AuthService
 
@@ -31,6 +31,18 @@ async def login(
     try:
         return await auth_service.login(data.email, data.password)
     except AuthenticationError as exc:
+        raise exc.to_http() from exc
+
+
+@router.post("/telegram-login", response_model=TokenResponse)
+async def telegram_login(
+    data: TelegramLoginRequest,
+    auth_service: AuthService = Depends(get_auth_service),  # noqa: B008
+) -> TokenResponse:
+    """Exchange a Telegram chat ID for an access token (requires linked account)."""
+    try:
+        return await auth_service.telegram_login(data.telegram_chat_id)
+    except AuthorizationError as exc:
         raise exc.to_http() from exc
 
 

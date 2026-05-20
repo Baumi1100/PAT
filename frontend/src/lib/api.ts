@@ -3,7 +3,6 @@ import axios, { AxiosInstance, AxiosError } from "axios";
 import { tokenStorage } from "@/lib/auth";
 import type {
   Application,
-  AIProviderConfig,
   Job,
   Resume,
   TokenResponse,

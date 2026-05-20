@@ -16,9 +16,9 @@ async def get_qdrant() -> AsyncQdrantClient:
 
 
 async def ensure_collections(client: AsyncQdrantClient) -> None:
+    existing = await client.get_collections()
+    names = {c.name for c in existing.collections}
     for name in [COLLECTION_RESUMES, COLLECTION_JOBS]:
-        existing = await client.get_collections()
-        names = [c.name for c in existing.collections]
         if name not in names:
             await client.create_collection(
                 collection_name=name,
@@ -57,8 +57,12 @@ async def upsert_job_embedding(job_id: str, text: str) -> None:
 async def compute_semantic_similarity(resume_id: str, job_id: str) -> float:
     """Returns cosine similarity 0.0–1.0 between resume and job embeddings."""
     client = await get_qdrant()
-    resume_vec = (await client.retrieve(COLLECTION_RESUMES, ids=[resume_id]))[0].vector
-    job_vec = (await client.retrieve(COLLECTION_JOBS, ids=[job_id]))[0].vector
+    resume_results = await client.retrieve(COLLECTION_RESUMES, ids=[resume_id], with_vectors=True)
+    job_results = await client.retrieve(COLLECTION_JOBS, ids=[job_id], with_vectors=True)
+    if not resume_results or not job_results:
+        return 0.0
+    resume_vec = resume_results[0].vector
+    job_vec = job_results[0].vector
     if not resume_vec or not job_vec:
         return 0.0
     dot = sum(a * b for a, b in zip(resume_vec, job_vec))
