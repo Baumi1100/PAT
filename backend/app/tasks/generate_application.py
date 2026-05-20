@@ -13,7 +13,7 @@ from app.ai.agents.skill_gap import SkillGapAgent
 from app.tasks.celery_app import celery_app
 
 
-@celery_app.task(bind=True, name="tasks.generate_application", max_retries=2)
+@celery_app.task(bind=True, name="tasks.generate_application")
 def generate_application_task(
     self,
     application_id: str,
@@ -23,9 +23,8 @@ def generate_application_task(
     user_provider: str | None = None,
     user_model: str | None = None,
 ) -> dict:
-    return asyncio.get_event_loop().run_until_complete(
+    return asyncio.run(
         _run_pipeline(
-            self,
             application_id,
             job_text,
             resume_text,
@@ -37,7 +36,6 @@ def generate_application_task(
 
 
 async def _run_pipeline(
-    task,
     application_id: str,
     job_text: str,
     resume_text: str,
@@ -45,7 +43,7 @@ async def _run_pipeline(
     user_provider: str | None,
     user_model: str | None,
 ) -> dict:
-    kw = {"user_provider": user_provider, "user_model": user_model}
+    kw: dict[str, str | None] = {"user_provider": user_provider, "user_model": user_model}
 
     resume = await ResumeParserAgent().parse(resume_text, **kw)
     job = await JobAnalyzerAgent().analyze(job_text, **kw)
