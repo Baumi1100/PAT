@@ -49,7 +49,9 @@ export const jobsApi = {
     client.get<Job[]>("/jobs/", { params: status ? { status } : undefined }),
   get: (id: string) => client.get<Job>(`/jobs/${id}`),
   create: (data: Partial<Job>) => client.post<Job>("/jobs/", data),
+  update: (id: string, data: Partial<Job>) => client.patch<Job>(`/jobs/${id}`, data),
   delete: (id: string) => client.delete(`/jobs/${id}`),
+  analyze: (id: string) => client.post<{ application_id: string; task_id: string }>(`/jobs/${id}/analyze`),
 };
 
 export const resumesApi = {

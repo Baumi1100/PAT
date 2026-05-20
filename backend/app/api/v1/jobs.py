@@ -10,7 +10,7 @@ from app.models.user import User
 from app.repositories.application_repository import ApplicationRepository
 from app.repositories.job_repository import JobRepository
 from app.repositories.resume_repository import ResumeRepository
-from app.schemas.job import JobCreate, JobRead
+from app.schemas.job import JobCreate, JobRead, JobUpdate
 from app.services.job_service import JobService
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
@@ -45,6 +45,16 @@ async def get_job(
     svc: JobService = Depends(_svc),  # noqa: B008
 ) -> Job:
     return await svc.get_for_user(job_id, current_user.id)
+
+
+@router.patch("/{job_id}", response_model=JobRead)
+async def update_job(
+    job_id: str,
+    data: JobUpdate,
+    current_user: User = Depends(get_current_user),  # noqa: B008
+    svc: JobService = Depends(_svc),  # noqa: B008
+) -> Job:
+    return await svc.update(job_id, current_user.id, data)
 
 
 @router.delete("/{job_id}", status_code=status.HTTP_204_NO_CONTENT)

@@ -20,8 +20,19 @@ class Job(Base, AuditMixin):
     url: Mapped[str | None] = mapped_column(String(2000), nullable=True)
     raw_text: Mapped[str | None] = mapped_column(Text, nullable=True)
     source: Mapped[str] = mapped_column(String(50), nullable=False, default="manual")
+    source_platform: Mapped[str | None] = mapped_column(String(100), nullable=True)
     parsed_data: Mapped[str | None] = mapped_column(Text, nullable=True)
-    status: Mapped[str] = mapped_column(String(50), nullable=False, default="new")
+    status: Mapped[str] = mapped_column(String(50), nullable=False, default="interessant")
+    # AI-extracted fields
+    salary_range: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    remote_policy: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    employment_type: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    seniority_level: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    # Manually managed tracking fields
+    priority: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    contact_person: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    applied_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     applications: Mapped[list["Application"]] = relationship(  # type: ignore[name-defined]  # noqa: F821

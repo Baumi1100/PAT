@@ -87,6 +87,30 @@ async def _run_pipeline(
                         db_job.company = job.company
                     if job.location and not db_job.location:
                         db_job.location = job.location
+                    if (
+                        hasattr(job, "salary_range")
+                        and job.salary_range
+                        and not db_job.salary_range
+                    ):
+                        db_job.salary_range = job.salary_range
+                    if (
+                        hasattr(job, "remote_policy")
+                        and job.remote_policy
+                        and not db_job.remote_policy
+                    ):
+                        db_job.remote_policy = job.remote_policy
+                    if (
+                        hasattr(job, "employment_type")
+                        and job.employment_type
+                        and not db_job.employment_type
+                    ):
+                        db_job.employment_type = job.employment_type
+                    if (
+                        hasattr(job, "seniority_level")
+                        and job.seniority_level
+                        and not db_job.seniority_level
+                    ):
+                        db_job.seniority_level = job.seniority_level
                     await session.commit()
 
         ats = await ATSKeywordAgent().analyze(resume, job, **kw)

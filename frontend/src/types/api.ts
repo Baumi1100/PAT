@@ -21,8 +21,18 @@ export interface Job {
   location: string | null;
   url: string | null;
   source: string;
+  source_platform: string | null;
   status: string;
   match_score: number | null;
+  salary_range: string | null;
+  remote_policy: string | null;
+  employment_type: string | null;
+  seniority_level: string | null;
+  priority: string | null;
+  notes: string | null;
+  contact_person: string | null;
+  applied_at: string | null;
+  raw_text: string | null;
   created_at: string;
 }
 
