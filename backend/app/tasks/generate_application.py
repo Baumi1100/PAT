@@ -264,6 +264,7 @@ async def _run_pipeline(
                         )
         except Exception:
             import logging
+
             logging.getLogger(__name__).exception(
                 "Telegram notification setup failed for application %s", application_id
             )

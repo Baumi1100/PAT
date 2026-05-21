@@ -3,6 +3,7 @@
 Utility for sending analysis-result notifications via Telegram.
 Called at the end of the Celery pipeline — fire-and-forget, never raises.
 """
+
 from __future__ import annotations
 
 import logging
