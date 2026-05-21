@@ -49,6 +49,8 @@ services:
         condition: service_started
     ports:
       - "8000:8000"
+    volumes:
+      - uploads_data:/tmp/pat_uploads
     healthcheck:
       test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\" || exit 1"]
       interval: 10s
@@ -68,6 +70,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    volumes:
+      - uploads_data:/tmp/pat_uploads
     healthcheck:
       test: ["CMD-SHELL", "celery -A app.tasks.celery_app inspect ping -d celery@$$HOSTNAME || exit 1"]
       interval: 30s
@@ -103,3 +107,4 @@ volumes:
   postgres_data:
   redis_data:
   qdrant_data:
+  uploads_data:
