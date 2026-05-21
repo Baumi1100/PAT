@@ -43,6 +43,9 @@ class Settings(BaseSettings):
     # Internal service URL (used by Telegram bot to reach the backend)
     backend_internal_url: str = "http://backend:8000"
 
+    # Public frontend URL — used in Telegram notifications so the link works on the user's device
+    frontend_url: str = "http://localhost:3000"
+
     # CORS
     cors_origins: list[str] = ["http://localhost:3000"]
 

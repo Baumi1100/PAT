@@ -238,6 +238,36 @@ async def _run_pipeline(
                 app.interview_questions = result["interview_questions"]
                 await session.commit()
 
+        # ── Telegram notification ──────────────────────────────────────────
+        # Fetch user telegram_chat_id and job metadata, then notify.
+        # Wrapped in its own block so any failure never affects the result.
+        try:
+            from app.config import get_settings
+            from app.integrations.telegram.notify import send_analysis_result
+            from app.models.user import User as UserModel
+
+            async with session_factory() as session:
+                db_app = await session.get(Application, application_id)
+                if db_app:
+                    user_obj = await session.get(UserModel, db_app.user_id)
+                    db_job = await session.get(Job, db_app.job_id)
+                    if user_obj and user_obj.telegram_chat_id:
+                        await send_analysis_result(
+                            telegram_chat_id=user_obj.telegram_chat_id,
+                            job_title=db_job.title if db_job else "Stelle",
+                            company=db_job.company if db_job else None,
+                            match_score=result["match_score"],
+                            strengths=result["strengths"],
+                            skill_gaps=result["skill_gaps"],
+                            application_id=application_id,
+                            frontend_url=get_settings().frontend_url,
+                        )
+        except Exception:
+            import logging
+            logging.getLogger(__name__).exception(
+                "Telegram notification setup failed for application %s", application_id
+            )
+
         return result
 
     except Exception as exc:
