@@ -10,7 +10,10 @@ import type {
   WorkCertificate,
 } from "@/types/api";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
+// BASE_URL is always empty — API calls use relative paths (/api/v1/...)
+// which are proxied server-side by Next.js rewrites in next.config.ts.
+// For local dev, set INTERNAL_API_URL=http://localhost:8000 in .env.local.
+const BASE_URL = "";
 
 function createClient(): AxiosInstance {
   const client = axios.create({ baseURL: `${BASE_URL}/api/v1` });
