@@ -10,7 +10,7 @@ import type {
   WorkCertificate,
 } from "@/types/api";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 function createClient(): AxiosInstance {
   const client = axios.create({ baseURL: `${BASE_URL}/api/v1` });
