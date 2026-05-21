@@ -105,6 +105,8 @@ async def analyze_job(
         job_text=job.raw_text or job.title,
         resume_text=resume.raw_text or "",
         applicant_name=current_user.full_name,
+        resume_file_path=resume.file_path,
+        resume_file_type=resume.file_type,
     )
     application.celery_task_id = task.id
     application.status = "pending"

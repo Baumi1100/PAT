@@ -16,6 +16,7 @@ from app.ai.agents.match_scorer import MatchScorerAgent
 from app.ai.agents.resume_optimizer import ResumeOptimizerAgent
 from app.ai.agents.resume_parser import ResumeParserAgent
 from app.ai.agents.skill_gap import SkillGapAgent
+from app.ai.agents.tex_keyword_injector import TexKeywordInjectorAgent
 from app.ai.schemas.resume_schemas import WorkExperience
 from app.document_processing.moderncv_builder import build_cover_letter, build_resume
 from app.models.job import Job
@@ -31,6 +32,8 @@ def generate_application_task(
     applicant_name: str,
     user_provider: str | None = None,
     user_model: str | None = None,
+    resume_file_path: str | None = None,
+    resume_file_type: str | None = None,
 ) -> dict:
     return asyncio.run(
         _run_pipeline(
@@ -40,6 +43,8 @@ def generate_application_task(
             applicant_name,
             user_provider,
             user_model,
+            resume_file_path,
+            resume_file_type,
         )
     )
 
@@ -63,6 +68,8 @@ async def _run_pipeline(
     applicant_name: str,
     user_provider: str | None,
     user_model: str | None,
+    resume_file_path: str | None = None,
+    resume_file_type: str | None = None,
 ) -> dict:
     from app.models.application import Application
 
@@ -203,8 +210,34 @@ async def _run_pipeline(
             resume, job, applicant_name, profile_text=profile_text, **kw
         )
 
-        # Build moderncv LaTeX — our template is always valid, no AI-generated LaTeX needed
-        optimized.latex_source = build_resume(resume, optimized)
+        # Build resume LaTeX:
+        # - If the user uploaded a .tex file, inject only ATS keywords into their original source.
+        # - Otherwise fall back to the moderncv builder.
+        original_tex: str | None = None
+        if resume_file_type == "tex" and resume_file_path:
+            try:
+                import aiofiles
+
+                async with aiofiles.open(resume_file_path, encoding="utf-8") as fh:
+                    original_tex = await fh.read()
+            except Exception:
+                import logging
+
+                logging.getLogger(__name__).warning(
+                    "Could not read original .tex file at %s — falling back to moderncv builder",
+                    resume_file_path,
+                )
+
+        if original_tex:
+            optimized.latex_source = await TexKeywordInjectorAgent().inject(
+                original_tex=original_tex,
+                missing_keywords=ats.keywords_missing_from_resume,
+                user_provider=user_provider,
+                user_model=user_model,
+            )
+        else:
+            optimized.latex_source = build_resume(resume, optimized)
+
         cover.latex_source = build_cover_letter(resume, cover, job)
 
         questions = await InterviewQuestionsAgent().generate(resume, job, match, **kw)
