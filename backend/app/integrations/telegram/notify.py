@@ -34,18 +34,20 @@ async def send_analysis_result(
         return
 
     try:
+        from html import escape
+
         from telegram import Bot
 
         score_emoji = "🟢" if match_score >= 75 else "🟡" if match_score >= 50 else "🔴"
-        job_label = f"{job_title}" + (f" @ {company}" if company else "")
+        job_label = escape(job_title) + (f" @ {escape(company)}" if company else "")
 
         # Strengths — max 3 bullets
-        strength_lines = "\n".join(f"  • {s}" for s in strengths[:3])
-        strengths_block = f"✅ *Stärken:*\n{strength_lines}" if strength_lines else ""
+        strength_lines = "\n".join(f"  • {escape(s)}" for s in strengths[:3])
+        strengths_block = f"✅ <b>Stärken:</b>\n{strength_lines}" if strength_lines else ""
 
         # Skill gaps — max 3 bullets
-        gap_lines = "\n".join(f"  • {g}" for g in skill_gaps[:3])
-        gaps_block = f"⚠️ *Lücken:*\n{gap_lines}" if gap_lines else ""
+        gap_lines = "\n".join(f"  • {escape(g)}" for g in skill_gaps[:3])
+        gaps_block = f"⚠️ <b>Lücken:</b>\n{gap_lines}" if gap_lines else ""
 
         body_parts = [p for p in [strengths_block, gaps_block] if p]
         body = "\n\n".join(body_parts)
@@ -53,11 +55,11 @@ async def send_analysis_result(
         link = f"{frontend_url.rstrip('/')}/applications/{application_id}"
 
         message = (
-            f"✅ *Analyse abgeschlossen!*\n\n"
+            f"✅ <b>Analyse abgeschlossen!</b>\n\n"
             f"💼 {job_label}\n\n"
-            f"{score_emoji} *Match\\-Score: {int(match_score)}/100*\n\n"
+            f"{score_emoji} <b>Match-Score: {int(match_score)}/100</b>\n\n"
             f"{body}\n\n"
-            f"[Details öffnen]({link})"
+            f'<a href="{link}">Details öffnen</a>'
         )
 
         bot = Bot(token=settings.telegram_bot_token)
@@ -65,7 +67,7 @@ async def send_analysis_result(
             await bot.send_message(
                 chat_id=telegram_chat_id,
                 text=message,
-                parse_mode="MarkdownV2",
+                parse_mode="HTML",
                 disable_web_page_preview=True,
             )
 
