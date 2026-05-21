@@ -6,6 +6,8 @@ additions at semantically appropriate locations. Structure, style, and all
 existing content are preserved exactly.
 """
 
+import re
+
 from pydantic import BaseModel
 
 from app.ai.agents.base_agent import BaseAgent
@@ -13,6 +15,16 @@ from app.ai.agents.base_agent import BaseAgent
 
 class InjectedTex(BaseModel):
     latex_source: str
+
+
+def _restore_unicode(text: str) -> str:
+    """Convert any literal \\uXXXX sequences back to real Unicode characters.
+
+    Some LLMs emit \\u00fc instead of ü when producing JSON payloads. After
+    json.loads the escape survives as a six-character literal; this pass
+    converts it back to the proper character so the LaTeX compiles correctly.
+    """
+    return re.sub(r"\\u([0-9a-fA-F]{4})", lambda m: chr(int(m.group(1), 16)), text)
 
 
 class TexKeywordInjectorAgent(BaseAgent):
@@ -35,7 +47,10 @@ class TexKeywordInjectorAgent(BaseAgent):
         "describes what is already stated — no new claims.\n"
         "6. If a keyword cannot be added naturally without fabricating information, "
         "skip it entirely.\n"
-        "7. Return ONLY the LaTeX source inside the latex_source field — no explanations, "
+        "7. Preserve ALL non-ASCII characters (ä, ö, ü, ß, é, etc.) exactly as they "
+        "appear in the input. Do NOT replace them with \\uXXXX escape sequences or any "
+        "other encoding — output them as literal UTF-8 characters.\n"
+        "8. Return ONLY the LaTeX source inside the latex_source field — no explanations, "
         "no markdown fences, no commentary."
     )
 
@@ -63,4 +78,5 @@ class TexKeywordInjectorAgent(BaseAgent):
             user_model=user_model,
             max_tokens=16000,
         )
-        return result.latex_source or original_tex
+        latex = result.latex_source or original_tex
+        return _restore_unicode(latex)
