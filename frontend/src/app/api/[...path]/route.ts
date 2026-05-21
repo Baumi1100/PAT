@@ -29,11 +29,20 @@ async function handler(
       ? await req.arrayBuffer()
       : undefined;
 
-  const response = await fetch(backendUrl, {
-    method: req.method,
-    headers,
-    body,
-  });
+  let response: Response;
+  try {
+    response = await fetch(backendUrl, {
+      method: req.method,
+      headers,
+      body,
+    });
+  } catch (err) {
+    console.error(`[proxy] fetch failed → ${backendUrl}:`, err);
+    return new NextResponse(
+      JSON.stringify({ detail: "Backend unreachable" }),
+      { status: 502, headers: { "Content-Type": "application/json" } }
+    );
+  }
 
   // Forward response headers except hop-by-hop ones
   const responseHeaders = new Headers();
