@@ -5,7 +5,7 @@ import { User, MessageCircle, Sparkles, Check, Loader2, Zap } from "lucide-react
 import { authApi } from "@/lib/api";
 import { tokenStorage } from "@/lib/auth";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 interface FullUser {
   id: string;
